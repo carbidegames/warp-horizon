@@ -1,29 +1,52 @@
 #[macro_use] extern crate glium;
+extern crate time;
 
 mod frontend;
-mod update;
 
-use std::sync::mpsc;
-use std::thread;
+use time::{PreciseTime, Duration};
+use frontend::{Frontend};
 
-#[derive(Clone)]
+trait DeltaScale {
+    fn scale(&self, value: f32) -> f32;
+}
+
+impl DeltaScale for Duration {
+    fn scale(&self, value: f32) -> f32 {
+        value * (self.num_microseconds().unwrap() as f32 / 1_000_000.0)
+    }
+}
+
 pub struct GameState {
     t: f32
 }
 
-pub struct EngineToken;
-
 pub fn run_client() {
-    let (tx, rx) = mpsc::channel();
+    // Initialize the frontend
+    let mut frontend = Frontend::init();
 
-    let update = thread::spawn(move|| {
-        update::update_runtime(tx);
-    });
+    // Initialize the game state
+    let mut state = GameState {
+        t: 0.0
+    };
 
-    let frontend = thread::spawn(move|| {
-        frontend::frontend_runtime(rx);
-    });
+    // Run the game loop
+    let mut last_time = PreciseTime::now();
+    while !frontend.should_exit() {
+        // Get this tick's delta
+        let time = PreciseTime::now();
+        let delta = last_time.to(time);
+        last_time = time;
 
-    update.join().unwrap();
-    frontend.join().unwrap();
+        // Process events
+        frontend.process_events();
+
+        // Update the game state
+        state.t = state.t + delta.scale(0.4);
+        if state.t > ::std::f32::consts::PI * 2.0 {
+            state.t = 0.0;
+        }
+
+        // Render
+        frontend.render(&state);
+    }
 }

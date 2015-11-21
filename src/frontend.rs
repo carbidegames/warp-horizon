@@ -1,7 +1,7 @@
-use std::sync::mpsc::{Receiver};
 use glium::{VertexBuffer, DisplayBuild, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{WindowBuilder, Event};
+use glium::backend::glutin_backend::{GlutinFacade};
 use ::{GameState};
 
 #[derive(Copy, Clone)]
@@ -11,80 +11,69 @@ struct SimpleVertex {
 
 implement_vertex!(SimpleVertex, position);
 
-fn get_or_wait_state(receiver: &Receiver<GameState>) -> GameState {
-    let mut prev_state = None;
-    loop {
-        // Non-blocking try to get state
-        let state_r = receiver.try_recv();
-
-        if let Ok(state) = state_r {
-            // If we received a state, keep track of it while we continue checking
-            prev_state = Some(state);
-        }
-        else {
-            // There's no more states left in the recv
-            if let Some(state) = prev_state {
-                // We have had a state, so return it
-                return state;
-            }
-            else {
-                // We haven't had a state, so blocking wait
-                return receiver.recv().unwrap();
-            }
-        }
-    }
+pub struct Frontend {
+    display: GlutinFacade,
+    program: Program,
+    should_exit: bool
 }
 
-pub fn frontend_runtime(receiver: Receiver<GameState>) {
-    // Set up our frontend
-    let display = WindowBuilder::new().build_glium().unwrap();
+impl Frontend {
+    pub fn init() -> Frontend {
+        // Set up our frontend
+        let display = WindowBuilder::new().build_glium().unwrap();
 
-    // Load in the vertices
-    let vertex1 = SimpleVertex { position: [-0.5, -0.5] };
-    let vertex2 = SimpleVertex { position: [ 0.0,  0.5] };
-    let vertex3 = SimpleVertex { position: [ 0.5, -0.25] };
-    let shape = vec![vertex1, vertex2, vertex3];
-    let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
-    let indices = NoIndices(PrimitiveType::TrianglesList);
+        // Load in the shaders
+        let vertex_shader_src = r#"
+            #version 140
 
-    // Load in the shaders
-    let vertex_shader_src = r#"
-        #version 140
+            in vec2 position;
 
-        in vec2 position;
+            uniform mat4 matrix;
 
-        uniform mat4 matrix;
+            void main() {
+                gl_Position = matrix * vec4(position, 0.0, 1.0);
+            }
+        "#;
+        let fragment_shader_src = r#"
+            #version 140
 
-        void main() {
-            gl_Position = matrix * vec4(position, 0.0, 1.0);
+            out vec4 color;
+
+            void main() {
+                color = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        "#;
+        let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+
+        // Create the frontend struct
+        Frontend {
+            display: display,
+            program: program,
+            should_exit: false
         }
-    "#;
-    let fragment_shader_src = r#"
-        #version 140
+    }
 
-        out vec4 color;
-
-        void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    "#;
-    let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
-
-    // Run the render loop
-    loop {
-        // Wait for a game state
-        let state = get_or_wait_state(&receiver);
-
+    pub fn process_events(&mut self) {
         // Poll all events (TODO: pass them to the update runtime)
-        for ev in display.poll_events() {
+        for ev in self.display.poll_events() {
             match ev {
-                Event::Closed => return,
+                Event::Closed => self.should_exit = true,
                 _ => ()
             }
         }
+    }
+
+    pub fn render(&self, state: &GameState) {
+        // Load in the vertices
+        let vertex1 = SimpleVertex { position: [-0.5, -0.5] };
+        let vertex2 = SimpleVertex { position: [ 0.0,  0.5] };
+        let vertex3 = SimpleVertex { position: [ 0.5, -0.25] };
+        let shape = vec![vertex1, vertex2, vertex3];
+        let vertex_buffer = VertexBuffer::new(&self.display, &shape).unwrap();
+        let indices = NoIndices(PrimitiveType::TrianglesList);
 
         // Begin drawing
-        let mut target = display.draw();
+        let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
         // Actually render our triangle
@@ -99,11 +88,15 @@ pub fn frontend_runtime(receiver: Receiver<GameState>) {
         };
         target.draw(
             &vertex_buffer, &indices,
-            &program,
+            &self.program,
             &uniforms, &Default::default()
         ).unwrap();
 
         // Finish drawing
         target.finish().unwrap();
+    }
+
+    pub fn should_exit(&self) -> bool {
+        self.should_exit
     }
 }
