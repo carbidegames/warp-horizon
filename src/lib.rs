@@ -11,6 +11,8 @@ pub struct GameState {
     t: f32
 }
 
+pub struct EngineToken;
+
 pub fn run_client() {
     let (tx, rx) = mpsc::channel();
 

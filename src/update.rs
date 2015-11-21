@@ -1,5 +1,7 @@
 use std::sync::mpsc::{Sender};
-use ::{GameState};
+use std::time::{Duration};
+use std::thread;
+use ::{GameState, EngineToken};
 
 pub fn update_runtime(sender: Sender<GameState>) {
     // Mutable game state
@@ -16,9 +18,10 @@ pub fn update_runtime(sender: Sender<GameState>) {
         }
 
         // Send the state to whoever needs it
+        //engine.submit_data(Box::new(state.clone()));
         sender.send(state.clone()).unwrap();
 
         // Wait for the next update step
-        ::std::thread::sleep_ms(10);
+        thread::sleep(Duration::from_millis(10));
     }
 }
