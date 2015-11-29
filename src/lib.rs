@@ -1,5 +1,6 @@
 #[macro_use] extern crate glium;
 extern crate time;
+extern crate nalgebra;
 
 mod frontend;
 
@@ -41,8 +42,8 @@ pub fn run_client() {
         frontend.process_events();
 
         // Update the game state
-        state.t = state.t + delta.scale(0.4);
-        if state.t > ::std::f32::consts::PI * 2.0 {
+        state.t = state.t + delta.scale(20.0);
+        if state.t > 200.0 {
             state.t = 0.0;
         }
 

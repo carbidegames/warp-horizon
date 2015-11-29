@@ -6,3 +6,4 @@ authors = ["Layl <layl@edgeworksgames.com>"]
 [dependencies]
 glium = "0.12"
 time = "0.1"
+nalgebra = "0.4.0"

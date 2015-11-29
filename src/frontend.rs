@@ -2,6 +2,7 @@ use glium::{VertexBuffer, DisplayBuild, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{WindowBuilder, Event};
 use glium::backend::glutin_backend::{GlutinFacade};
+use nalgebra::{OrthoMat3};
 use ::{GameState};
 
 #[derive(Copy, Clone)]
@@ -20,7 +21,9 @@ pub struct Frontend {
 impl Frontend {
     pub fn init() -> Frontend {
         // Set up our frontend
-        let display = WindowBuilder::new().build_glium().unwrap();
+        let display = WindowBuilder::new()
+            .with_dimensions(1280, 720)
+            .build_glium().unwrap();
 
         // Load in the shaders
         let vertex_shader_src = r#"
@@ -65,26 +68,24 @@ impl Frontend {
 
     pub fn render(&self, state: &GameState) {
         // Load in the vertices
-        let vertex1 = SimpleVertex { position: [-0.5, -0.5] };
-        let vertex2 = SimpleVertex { position: [ 0.0,  0.5] };
-        let vertex3 = SimpleVertex { position: [ 0.5, -0.25] };
+        let t = state.t;
+        let vertex1 = SimpleVertex { position: [-10.0 + t, -10.0] };
+        let vertex2 = SimpleVertex { position: [  0.0 + t,  10.0] };
+        let vertex3 = SimpleVertex { position: [ 10.0 + t,  -5.0] };
         let shape = vec![vertex1, vertex2, vertex3];
         let vertex_buffer = VertexBuffer::new(&self.display, &shape).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
+
+        // Create our projection matrix
+        let matrix = OrthoMat3::<f32>::new(1280.0, 720.0, -10.0, 10.0);
 
         // Begin drawing
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
         // Actually render our triangle
-        let t = state.t;
         let uniforms = uniform! {
-            matrix: [
-                [ t.cos(), t.sin(), 0.0, 0.0],
-                [-t.sin(), t.cos(), 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0f32],
-            ]
+            matrix: *matrix.as_mat().as_ref()
         };
         target.draw(
             &vertex_buffer, &indices,
