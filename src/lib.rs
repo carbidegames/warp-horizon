@@ -1,11 +1,12 @@
-#[macro_use] extern crate glium;
+#[macro_use]
+extern crate glium;
 extern crate time;
 extern crate nalgebra;
 
 mod frontend;
 
 use time::{PreciseTime, Duration};
-use frontend::{Frontend};
+use frontend::Frontend;
 
 trait DeltaScale {
     fn scale(&self, value: f32) -> f32;
@@ -18,7 +19,7 @@ impl DeltaScale for Duration {
 }
 
 pub struct GameState {
-    t: f32
+    t: f32,
 }
 
 pub fn run_client() {
@@ -26,9 +27,7 @@ pub fn run_client() {
     let mut frontend = Frontend::init();
 
     // Initialize the game state
-    let mut state = GameState {
-        t: 0.0
-    };
+    let mut state = GameState { t: 0.0 };
 
     // Run the game loop
     let mut last_time = PreciseTime::now();

@@ -1,9 +1,9 @@
 use glium::{VertexBuffer, DisplayBuild, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{WindowBuilder, Event};
-use glium::backend::glutin_backend::{GlutinFacade};
-use nalgebra::{OrthoMat3};
-use ::{GameState};
+use glium::backend::glutin_backend::GlutinFacade;
+use nalgebra::OrthoMat3;
+use GameState;
 
 #[derive(Copy, Clone)]
 struct SimpleVertex {
@@ -15,7 +15,7 @@ implement_vertex!(SimpleVertex, position);
 pub struct Frontend {
     display: GlutinFacade,
     program: Program,
-    should_exit: bool
+    should_exit: bool,
 }
 
 impl Frontend {
@@ -23,7 +23,8 @@ impl Frontend {
         // Set up our frontend
         let display = WindowBuilder::new()
             .with_dimensions(1280, 720)
-            .build_glium().unwrap();
+            .build_glium()
+            .unwrap();
 
         // Load in the shaders
         let vertex_shader_src = r#"
@@ -46,22 +47,23 @@ impl Frontend {
                 color = vec4(1.0, 0.0, 0.0, 1.0);
             }
         "#;
-        let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+        let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
+            .unwrap();
 
         // Create the frontend struct
         Frontend {
             display: display,
             program: program,
-            should_exit: false
+            should_exit: false,
         }
     }
 
     pub fn process_events(&mut self) {
-        // Poll all events (TODO: pass them to the update runtime)
+        // Poll all events
         for ev in self.display.poll_events() {
             match ev {
                 Event::Closed => self.should_exit = true,
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -70,8 +72,8 @@ impl Frontend {
         // Load in the vertices
         let t = state.t;
         let vertex1 = SimpleVertex { position: [-10.0 + t, -10.0] };
-        let vertex2 = SimpleVertex { position: [  0.0 + t,  10.0] };
-        let vertex3 = SimpleVertex { position: [ 10.0 + t,  -5.0] };
+        let vertex2 = SimpleVertex { position: [0.0 + t, 10.0] };
+        let vertex3 = SimpleVertex { position: [10.0 + t, -5.0] };
         let shape = vec![vertex1, vertex2, vertex3];
         let vertex_buffer = VertexBuffer::new(&self.display, &shape).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
@@ -87,11 +89,12 @@ impl Frontend {
         let uniforms = uniform! {
             matrix: *matrix.as_mat().as_ref()
         };
-        target.draw(
-            &vertex_buffer, &indices,
-            &self.program,
-            &uniforms, &Default::default()
-        ).unwrap();
+        target.draw(&vertex_buffer,
+                    &indices,
+                    &self.program,
+                    &uniforms,
+                    &Default::default())
+              .unwrap();
 
         // Finish drawing
         target.finish().unwrap();
