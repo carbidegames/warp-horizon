@@ -6,47 +6,39 @@ extern crate nalgebra;
 mod frontend;
 
 use time::{PreciseTime, Duration};
-use frontend::Frontend;
 
-trait DeltaScale {
+pub use frontend::{Frontend};
+
+pub trait TickDelta {
     fn scale(&self, value: f32) -> f32;
 }
 
-impl DeltaScale for Duration {
+impl TickDelta for Duration {
     fn scale(&self, value: f32) -> f32 {
         value * (self.num_microseconds().unwrap() as f32 / 1_000_000.0)
     }
 }
 
-pub struct GameState {
-    t: f32,
+pub struct FrameTimer {
+    last_time: PreciseTime,
 }
 
-pub fn run_client() {
-    // Initialize the frontend
-    let mut frontend = Frontend::init();
-
-    // Initialize the game state
-    let mut state = GameState { t: 0.0 };
-
-    // Run the game loop
-    let mut last_time = PreciseTime::now();
-    while !frontend.should_exit() {
-        // Get this tick's delta
-        let time = PreciseTime::now();
-        let delta = last_time.to(time);
-        last_time = time;
-
-        // Process events
-        frontend.process_events();
-
-        // Update the game state
-        state.t = state.t + delta.scale(20.0);
-        if state.t > 200.0 {
-            state.t = 0.0;
+impl FrameTimer {
+    pub fn start() -> FrameTimer {
+        FrameTimer {
+            last_time: PreciseTime::now()
         }
-
-        // Render
-        frontend.render(&state);
     }
+
+    pub fn tick(&mut self) -> Duration {
+        let time = PreciseTime::now();
+        let delta = self.last_time.to(time);
+        self.last_time = time;
+
+        delta
+    }
+}
+
+pub struct GameState {
+    pub t: f32,
 }
