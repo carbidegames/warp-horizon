@@ -69,21 +69,35 @@ impl Frontend {
     }
 
     pub fn render(&self, state: &GameState) {
-        // Load in the vertices
-        let t = 0.0;
-        let vertex1 = SimpleVertex { position: [-10.0 + t, -10.0] };
-        let vertex2 = SimpleVertex { position: [0.0 + t, 10.0] };
-        let vertex3 = SimpleVertex { position: [10.0 + t, -5.0] };
-        let shape = vec![vertex1, vertex2, vertex3];
-        let vertex_buffer = VertexBuffer::new(&self.display, &shape).unwrap();
-        let indices = NoIndices(PrimitiveType::TrianglesList);
-
         // Create our projection matrix
         let matrix = OrthoMat3::<f32>::new(1280.0, 720.0, -10.0, 10.0);
 
         // Begin drawing
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
+
+        // Turn the map into vertices
+        let grid = state.main_grid();
+        let mut vertices: Vec<SimpleVertex> = Vec::new();
+        for y in 0..grid.height() {
+            for x in 0..grid.width() {
+                if grid.at(x, y) == 0 { continue; }
+
+                let xf = x as f32 * 20.0;
+                let yf = y as f32 * 20.0;
+                vertices.push(SimpleVertex { position: [0.0 + xf, 0.0 + yf] });
+                vertices.push(SimpleVertex { position: [0.0 + xf, 20.0 + yf] });
+                vertices.push(SimpleVertex { position: [20.0 + xf, 0.0 + yf] });
+
+                vertices.push(SimpleVertex { position: [20.0 + xf, 0.0 + yf] });
+                vertices.push(SimpleVertex { position: [20.0 + xf, 20.0 + yf] });
+                vertices.push(SimpleVertex { position: [0.0 + xf, 20.0 + yf] });
+            }
+        }
+
+        // Turn the vertices into a VBO
+        let vertex_buffer = VertexBuffer::dynamic(&self.display, &vertices).unwrap();
+        let indices = NoIndices(PrimitiveType::TrianglesList);
 
         // Actually render our triangle
         let uniforms = uniform! {

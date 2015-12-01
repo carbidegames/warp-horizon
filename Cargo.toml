@@ -7,3 +7,4 @@ authors = ["Layl <layl@edgeworksgames.com>"]
 glium = "0.12"
 time = "0.1"
 nalgebra = "0.4.0"
+rand = "0.3.12"

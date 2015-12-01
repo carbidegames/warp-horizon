@@ -2,10 +2,12 @@
 extern crate glium;
 extern crate time;
 extern crate nalgebra;
+extern crate rand;
 
 mod frontend;
 
 use time::{PreciseTime, Duration};
+use rand::{XorShiftRng, SeedableRng, Rng};
 
 pub use frontend::Frontend;
 
@@ -37,16 +39,48 @@ impl FrameTimer {
     }
 }
 
-pub struct GameState {
+/// Represents a single game grid.
+pub struct Grid {
     tiles: Vec<i32>,
-    width: i32,
+    width: i32
+}
+
+impl Grid {
+    fn new(width: i32, height: i32) -> Self {
+        let mut rng = XorShiftRng::from_seed([1, 2, 3, 4]);
+        let mut tiles = vec![0i32; (width*height) as usize];
+
+        for n in 0..tiles.len() {
+            tiles[n] = (rng.next_u32()%2) as i32;
+        }
+
+        Grid {
+            tiles: tiles,
+            width: height,
+        }
+    }
+
+    fn width(&self) -> i32 {
+        self.width
+    }
+
+    fn height(&self) -> i32 {
+        self.tiles.len() as i32 / self.width
+    }
+
+    fn at(&self, x: i32, y: i32) -> i32 {
+        self.tiles[(x + y*self.width) as usize]
+    }
+}
+
+pub struct GameState {
+    main_grid: Grid
 }
 
 impl GameState {
     pub fn new() -> Self {
         GameState {
-            tiles: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            width: 4,
+            main_grid: Grid::new(100, 100)
         }
     }
 
@@ -55,5 +89,9 @@ impl GameState {
         // if self.t > 200.0 {
         // self.t = 0.0;
         // }
+    }
+
+    pub fn main_grid(&self) -> &Grid {
+        &self.main_grid
     }
 }
