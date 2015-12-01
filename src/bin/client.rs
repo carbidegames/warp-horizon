@@ -7,7 +7,7 @@ fn main() {
     let mut frontend = Frontend::init();
 
     // Initialize the game state
-    let mut state = GameState { t: 0.0 };
+    let mut state = GameState::new();
 
     // Run the game loop
     let mut timer = FrameTimer::start();
@@ -18,10 +18,7 @@ fn main() {
         frontend.process_events();
 
         // Update the game state
-        state.t = state.t + delta.scale(20.0);
-        if state.t > 200.0 {
-            state.t = 0.0;
-        }
+        state.update(delta);
 
         // Render
         frontend.render(&state);

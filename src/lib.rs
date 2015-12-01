@@ -7,7 +7,7 @@ mod frontend;
 
 use time::{PreciseTime, Duration};
 
-pub use frontend::{Frontend};
+pub use frontend::Frontend;
 
 pub trait TickDelta {
     fn scale(&self, value: f32) -> f32;
@@ -24,10 +24,8 @@ pub struct FrameTimer {
 }
 
 impl FrameTimer {
-    pub fn start() -> FrameTimer {
-        FrameTimer {
-            last_time: PreciseTime::now()
-        }
+    pub fn start() -> Self {
+        FrameTimer { last_time: PreciseTime::now() }
     }
 
     pub fn tick(&mut self) -> Duration {
@@ -40,5 +38,22 @@ impl FrameTimer {
 }
 
 pub struct GameState {
-    pub t: f32,
+    tiles: Vec<i32>,
+    width: i32,
+}
+
+impl GameState {
+    pub fn new() -> Self {
+        GameState {
+            tiles: vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            width: 4,
+        }
+    }
+
+    pub fn update(&mut self, _delta: Duration) {
+        // self.t = self.t + delta.scale(20.0);
+        // if self.t > 200.0 {
+        // self.t = 0.0;
+        // }
+    }
 }

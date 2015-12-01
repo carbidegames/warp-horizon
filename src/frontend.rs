@@ -19,7 +19,7 @@ pub struct Frontend {
 }
 
 impl Frontend {
-    pub fn init() -> Frontend {
+    pub fn init() -> Self {
         // Set up our frontend
         let display = WindowBuilder::new()
             .with_dimensions(1280, 720)
@@ -70,7 +70,7 @@ impl Frontend {
 
     pub fn render(&self, state: &GameState) {
         // Load in the vertices
-        let t = state.t;
+        let t = 0.0;
         let vertex1 = SimpleVertex { position: [-10.0 + t, -10.0] };
         let vertex2 = SimpleVertex { position: [0.0 + t, 10.0] };
         let vertex3 = SimpleVertex { position: [10.0 + t, -5.0] };
