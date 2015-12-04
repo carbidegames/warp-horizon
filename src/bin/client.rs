@@ -7,7 +7,7 @@ fn main() {
     let mut frontend = Frontend::init();
 
     // Initialize the game state
-    let mut state = GameState::new();
+    let mut state = ClientState::new();
 
     // Run the game loop
     let mut timer = FrameTimer::start();

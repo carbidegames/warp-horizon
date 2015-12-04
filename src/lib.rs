@@ -8,6 +8,7 @@ mod frontend;
 
 use time::{PreciseTime, Duration};
 use rand::{XorShiftRng, SeedableRng, Rng};
+use nalgebra::{Vec2};
 
 pub use frontend::Frontend;
 
@@ -73,14 +74,32 @@ impl Grid {
     }
 }
 
-pub struct GameState {
-    main_grid: Grid
+pub struct Camera {
+    position: Vec2<f32>
 }
 
-impl GameState {
+impl Camera {
+    fn new() -> Self {
+        Camera {
+            position: Vec2::new(0.0, 0.0)
+        }
+    }
+
+    pub fn position(&self) -> Vec2<f32> {
+        self.position
+    }
+}
+
+pub struct ClientState {
+    main_grid: Grid,
+    main_camera: Camera
+}
+
+impl ClientState {
     pub fn new() -> Self {
-        GameState {
-            main_grid: Grid::new(100, 100)
+        ClientState {
+            main_grid: Grid::new(100, 100),
+            main_camera: Camera::new()
         }
     }
 
@@ -93,5 +112,9 @@ impl GameState {
 
     pub fn main_grid(&self) -> &Grid {
         &self.main_grid
+    }
+
+    pub fn main_camera(&self) -> &Camera {
+        &self.main_camera
     }
 }
