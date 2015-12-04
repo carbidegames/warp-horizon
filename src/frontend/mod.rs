@@ -2,7 +2,7 @@ use glium::{VertexBuffer, DisplayBuild, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{WindowBuilder, Event};
 use glium::backend::glutin_backend::GlutinFacade;
-use nalgebra::{OrthoMat3};
+use nalgebra::OrthoMat3;
 use ClientState;
 
 #[derive(Copy, Clone)]
@@ -27,11 +27,10 @@ impl Frontend {
             .unwrap();
 
         // Load in the shaders
-        let program = Program::from_source(
-            &display,
-            include_str!("vert.glsl"),
-            include_str!("frag.glsl"),
-            None)
+        let program = Program::from_source(&display,
+                                           include_str!("vert.glsl"),
+                                           include_str!("frag.glsl"),
+                                           None)
             .unwrap();
 
         // Create the frontend struct
@@ -56,8 +55,8 @@ impl Frontend {
         // Create our projection matrix
         let cam = state.main_camera();
         let matrix = OrthoMat3::<f32>::new(1280.0, 720.0, -10.0, 10.0);
-        //let translation = Vec3::<f32>::new(1.0, 0.0, 0.0).to_homogeneous();
-        //let matrix = *projection.as_mat() * translation;
+        // let translation = Vec3::<f32>::new(1.0, 0.0, 0.0).to_homogeneous();
+        // let matrix = *projection.as_mat() * translation;
 
         // Begin drawing
         let mut target = self.display.draw();
@@ -68,7 +67,9 @@ impl Frontend {
         let mut vertices: Vec<SimpleVertex> = Vec::new();
         for y in 0..grid.height() {
             for x in 0..grid.width() {
-                if grid.at(x, y) == 0 { continue; }
+                if grid.get(x, y).unwrap() == 0 {
+                    continue;
+                }
 
                 let size = 32.0;
                 let xf = x as f32 * size;
