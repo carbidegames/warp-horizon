@@ -1,2 +1,4 @@
 newline_stlye = "Windows"
+
+chain_base_indent = "Tabbed"
 chain_indent = "Tabbed"

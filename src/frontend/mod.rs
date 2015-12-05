@@ -2,7 +2,7 @@ use glium::{VertexBuffer, DisplayBuild, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{WindowBuilder, Event};
 use glium::backend::glutin_backend::GlutinFacade;
-use nalgebra::OrthoMat3;
+use cgmath;
 use ClientState;
 
 #[derive(Copy, Clone)]
@@ -53,10 +53,13 @@ impl Frontend {
 
     pub fn render(&self, state: &ClientState) {
         // Create our projection matrix
-        let cam = state.main_camera();
-        let matrix = OrthoMat3::<f32>::new(1280.0, 720.0, -10.0, 10.0);
-        // let translation = Vec3::<f32>::new(1.0, 0.0, 0.0).to_homogeneous();
-        // let matrix = *projection.as_mat() * translation;
+        let cam_pos = state.main_camera().position();
+        let matrix = cgmath::ortho(cam_pos.x,
+                                   cam_pos.x + 1280.0,
+                                   cam_pos.y + 720.0,
+                                   cam_pos.y + 0.0,
+                                   -10.0,
+                                   10.0);
 
         // Begin drawing
         let mut target = self.display.draw();
@@ -74,13 +77,13 @@ impl Frontend {
                 let size = 32.0;
                 let xf = x as f32 * size;
                 let yf = y as f32 * size;
-                vertices.push(SimpleVertex { position: [0.0 + xf, 0.0 + yf] });
-                vertices.push(SimpleVertex { position: [0.0 + xf, size + yf] });
-                vertices.push(SimpleVertex { position: [size + xf, 0.0 + yf] });
+                vertices.push(SimpleVertex { position: [xf, yf] });
+                vertices.push(SimpleVertex { position: [xf, yf + size] });
+                vertices.push(SimpleVertex { position: [xf + size, yf] });
 
-                vertices.push(SimpleVertex { position: [size + xf, 0.0 + yf] });
-                vertices.push(SimpleVertex { position: [size + xf, size + yf] });
-                vertices.push(SimpleVertex { position: [0.0 + xf, size + yf] });
+                vertices.push(SimpleVertex { position: [xf + size, yf] });
+                vertices.push(SimpleVertex { position: [xf + size, yf + size] });
+                vertices.push(SimpleVertex { position: [xf, yf + size] });
             }
         }
 
@@ -90,7 +93,7 @@ impl Frontend {
 
         // Actually render the vertices
         let uniforms = uniform! {
-            matrix: *matrix.as_mat().as_ref()
+            matrix: { let m: [[f32; 4]; 4] = matrix.into(); m }
         };
         target.draw(&vertex_buffer,
                     &indices,

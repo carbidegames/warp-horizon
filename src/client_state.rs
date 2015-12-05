@@ -1,17 +1,17 @@
 use time::Duration;
-use nalgebra::Vec2;
+use cgmath::Vector2;
 use Grid;
 
 pub struct Camera {
-    position: Vec2<f32>,
+    position: Vector2<f32>,
 }
 
 impl Camera {
     fn new() -> Self {
-        Camera { position: Vec2::new(0.0, 0.0) }
+        Camera { position: Vector2::new(0.0, 0.0) }
     }
 
-    pub fn position(&self) -> Vec2<f32> {
+    pub fn position(&self) -> Vector2<f32> {
         self.position
     }
 }

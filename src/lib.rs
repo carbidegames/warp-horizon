@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate glium;
 extern crate time;
-extern crate nalgebra;
+extern crate cgmath;
 extern crate rand;
 
 mod frontend;
