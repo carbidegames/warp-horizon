@@ -11,7 +11,7 @@ impl TickDelta for Duration {
 }
 
 #[test]
-fn tick_delta_scales() {
+fn value_scaling_by_delta() {
     assert!(Duration::milliseconds(500).scale(1.0) == 0.5);
     assert!(Duration::milliseconds(500).scale(0.5) == 0.25);
     assert!(Duration::milliseconds(250).scale(1.0) == 0.25);
@@ -37,7 +37,7 @@ impl FrameTimer {
 }
 
 #[test]
-fn frame_timer_measures_time() {
+fn delta_measuring() {
     let mut timer = FrameTimer::start();
     ::std::thread::sleep(::std::time::Duration::from_millis(10));
     let duration_difference = timer.tick() - Duration::milliseconds(10);

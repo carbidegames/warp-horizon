@@ -3,6 +3,7 @@ extern crate glium;
 extern crate time;
 extern crate cgmath;
 extern crate rand;
+extern crate image;
 
 mod frontend;
 mod client_state;
