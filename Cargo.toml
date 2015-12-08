@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Layl <layl@edgeworksgames.com>"]
 
 [dependencies]
-glium = "0.12"
-time = "0.1"
 cgmath = "0.5"
-rand = "0.3"
+glium = "0.12"
 image = "0.5"
+rand = "0.3"
+time = "0.1"

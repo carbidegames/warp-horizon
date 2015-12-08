@@ -1,9 +1,9 @@
+extern crate cgmath;
 #[macro_use]
 extern crate glium;
-extern crate time;
-extern crate cgmath;
-extern crate rand;
 extern crate image;
+extern crate rand;
+extern crate time;
 
 mod frontend;
 mod client_state;

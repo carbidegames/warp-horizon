@@ -1,16 +1,16 @@
+mod tile_batch;
+
 use std::path::Path;
-use glium::{VertexBuffer, DisplayBuild, Surface, Program, DrawParameters, Blend};
-use glium::index::{NoIndices, PrimitiveType};
+use cgmath;
+use cgmath::Vector2;
+use glium::{DisplayBuild, Surface, Program, Frame};
 use glium::glutin::{WindowBuilder, Event};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
-use glium::draw_parameters::{BlendingFunction, LinearBlendingFactor, BackfaceCullingMode};
-use glium::uniforms::MagnifySamplerFilter;
-use cgmath;
-use cgmath::Vector2;
 use image;
-use ClientState;
+use {ClientState, Grid};
+use self::tile_batch::TileBatch;
 
 #[derive(Copy, Clone)]
 struct SimpleVertex {
@@ -92,11 +92,25 @@ impl Frontend {
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-        // Turn the map into vertices
-        let grid = state.main_grid();
-        let mut vertices: Vec<SimpleVertex> = Vec::new();
+        // Draw the grid
+        self.draw_grid(&matrix.into(), &mut target, state.main_grid());
+
+        // Finish drawing
+        target.finish().unwrap();
+    }
+
+    pub fn should_exit(&self) -> bool {
+        self.should_exit
+    }
+
+    fn draw_grid(&self, matrix: &[[f32; 4]; 4], target: &mut Frame, grid: &Grid) {
+        // Set up the tile batch we can use to draw
+        let mut batch = TileBatch::new();
+
+        // Actually send over the tile data
         for y in 0..grid.height() {
             for x in 0..grid.width() {
+                // If the tile is 0, there's nothing here
                 if grid.get(x, y).unwrap() == 0 {
                     continue;
                 }
@@ -105,58 +119,21 @@ impl Frontend {
                 let scale = 2.0;
                 let tile = Vector2::new(32.0, 15.0);
                 let tiles = tile * scale;
-                let uv = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
+                let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
                 let cell_start_pos = Vector2::new(x as f32, y as f32) * tiles;
                 let pos = cell_start_pos - Vector2::new(tiles.x * 0.5, tiles.y);
 
-                // I\
-                vertices.push(SimpleVertex::new([pos.x, pos.y], [0.0, uv.y * 7.0]));
-                vertices.push(SimpleVertex::new([pos.x + tiles.x, pos.y], [uv.x, uv.y * 7.0]));
-                vertices.push(SimpleVertex::new([pos.x, pos.y + tiles.y], [0.0, uv.y * 8.0]));
-
-                // \I
-                vertices.push(SimpleVertex::new([pos.x + tiles.x, pos.y], [uv.x, uv.y * 7.0]));
-                vertices.push(SimpleVertex::new([pos.x + tiles.x, pos.y + tiles.y],
-                                                [uv.x, uv.y * 8.0]));
-                vertices.push(SimpleVertex::new([pos.x, pos.y + tiles.y], [0.0, uv.y * 8.0]));
+                // Add the tile to the batch
+                batch.push_tile(pos,
+                                tiles,
+                                Vector2::new(0.0, uv_per.y * 7.0),
+                                Vector2::new(uv_per.x, uv_per.y * 8.0));
             }
         }
 
-        // Turn the vertices into a VBO
-        let vertex_buffer = VertexBuffer::dynamic(&self.display, &vertices).unwrap();
-        let indices = NoIndices(PrimitiveType::TrianglesList);
-
-        // Set up the drawing parameters for these vertices
-        let params = DrawParameters {
-            blend: {
-                let mut blend: Blend = Default::default();
-                blend.color = BlendingFunction::Addition {
-                    source: LinearBlendingFactor::SourceAlpha,
-                    destination: LinearBlendingFactor::OneMinusSourceAlpha,
-                };
-                blend
-            },
-            backface_culling: BackfaceCullingMode::CullClockwise,
-            ..Default::default()
-        };
-
-        // Actually render the vertices
-        let uniforms = uniform! {
-            matrix: { let m: [[f32; 4]; 4] = matrix.into(); m },
-            tex: self.texture
-                .sampled()
-                .magnify_filter(MagnifySamplerFilter::Nearest),
-        };
-        target.draw(&vertex_buffer, &indices, &self.program, &uniforms, &params)
-              .unwrap();
-
-        // Finish drawing
-        target.finish().unwrap();
-    }
-
-    pub fn should_exit(&self) -> bool {
-        self.should_exit
+        // Finally, draw
+        batch.draw(matrix, &self.texture, &self.display, &self.program, target);
     }
 }

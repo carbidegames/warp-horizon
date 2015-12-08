@@ -40,7 +40,8 @@ impl FrameTimer {
 fn delta_measuring() {
     let mut timer = FrameTimer::start();
     ::std::thread::sleep(::std::time::Duration::from_millis(10));
+
     let duration_difference = timer.tick() - Duration::milliseconds(10);
-    assert!(duration_difference < Duration::milliseconds(1));
-    assert!(duration_difference > -Duration::milliseconds(1));
+    assert!(duration_difference < Duration::milliseconds(4));
+    assert!(duration_difference > -Duration::milliseconds(4));
 }
