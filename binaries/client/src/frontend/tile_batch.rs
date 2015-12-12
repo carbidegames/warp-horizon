@@ -16,11 +16,13 @@ impl TileBatch {
         TileBatch { vertices: Vec::new() }
     }
 
-    pub fn push_tile(&mut self,
-                     pos: Vector2<f32>,
-                     size: Vector2<f32>,
-                     uv_start: Vector2<f32>,
-                     uv_end: Vector2<f32>) {
+    pub fn push_tile(
+        &mut self,
+        pos: Vector2<f32>,
+        size: Vector2<f32>,
+        uv_start: Vector2<f32>,
+        uv_end: Vector2<f32>
+    ) {
         // I\
         self.vertices.push(SimpleVertex::new([pos.x, pos.y], [uv_start.x, uv_start.y]));
         self.vertices.push(SimpleVertex::new([pos.x + size.x, pos.y], [uv_end.x, uv_start.y]));
@@ -28,12 +30,18 @@ impl TileBatch {
 
         // \I
         self.vertices.push(SimpleVertex::new([pos.x + size.x, pos.y], [uv_end.x, uv_start.y]));
-        self.vertices
-            .push(SimpleVertex::new([pos.x + size.x, pos.y + size.y], [uv_end.x, uv_end.y]));
+        self.vertices.push(SimpleVertex::new([pos.x + size.x, pos.y + size.y], [uv_end.x, uv_end.y]));
         self.vertices.push(SimpleVertex::new([pos.x, pos.y + size.y], [uv_start.x, uv_end.y]));
     }
 
-    pub fn draw(&self, matrix: &[[f32; 4]; 4], texture: &SrgbTexture2d, display: &GlutinFacade, program: &Program, target: &mut Frame) {
+    pub fn draw(
+        &self,
+        matrix: &[[f32; 4]; 4],
+        texture: &SrgbTexture2d,
+        display: &GlutinFacade,
+        program: &Program,
+        target: &mut Frame
+    ) {
         // Turn the vertices into a VBO
         let vertex_buffer = VertexBuffer::dynamic(display, &self.vertices).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
@@ -58,7 +66,6 @@ impl TileBatch {
                 .sampled()
                 .magnify_filter(MagnifySamplerFilter::Nearest),
         };
-        target.draw(&vertex_buffer, &indices, &program, &uniforms, &params)
-              .unwrap();
+        target.draw(&vertex_buffer, &indices, &program, &uniforms, &params).unwrap();
     }
 }

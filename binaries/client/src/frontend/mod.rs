@@ -9,7 +9,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
-use {ClientState, Grid};
+use warp_horizon::{ClientState, Grid};
 use self::tile_batch::TileBatch;
 
 #[derive(Copy, Clone)]
@@ -45,16 +45,16 @@ impl Frontend {
             .unwrap();
 
         // Load in the shaders
-        let program = Program::from_source(&display,
-                                           include_str!("vert.glsl"),
-                                           include_str!("frag.glsl"),
-                                           None)
+        let program = Program::from_source(
+            &display,
+            include_str!("vert.glsl"),
+            include_str!("frag.glsl"),
+            None
+        )
             .unwrap();
 
         // Load in the tileset
-        let image = image::open(&Path::new("./assets/tiles.png"))
-            .unwrap()
-            .to_rgba();
+        let image = image::open(&Path::new("./assets/tiles.png")).unwrap().to_rgba();
         let image_dimensions = image.dimensions();
         let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
         let texture = SrgbTexture2d::new(&display, image).unwrap();

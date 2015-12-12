@@ -1,0 +1,7 @@
+[package]
+name = "warp-horizon-gridserver"
+version = "0.1.0"
+authors = ["Layl <layl@edgeworksgames.com>"]
+
+[dependencies.warp-horizon]
+path = "../../libraries/warp_horizon"

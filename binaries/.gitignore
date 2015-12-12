@@ -1,6 +1,3 @@
 # cargo build artifacts
 target
 target-install
-
-# rustfmt backups
-*.rs.bk
