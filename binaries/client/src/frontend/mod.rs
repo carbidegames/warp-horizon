@@ -81,12 +81,11 @@ impl Frontend {
     pub fn render(&self, state: &ClientState) {
         // Create our projection matrix
         let cam_pos = state.main_camera().position();
-        let matrix = cgmath::ortho(cam_pos.x,
-                                   cam_pos.x + 1280.0,
-                                   cam_pos.y,
-                                   cam_pos.y + 720.0,
-                                   -10.0,
-                                   10.0);
+        let matrix = cgmath::ortho(
+            cam_pos.x, cam_pos.x + 1280.0,
+            cam_pos.y, cam_pos.y + 720.0,
+            -10.0, 10.0
+        );
 
         // Begin drawing
         let mut target = self.display.draw();
@@ -122,14 +121,20 @@ impl Frontend {
                 let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
-                let cell_start_pos = Vector2::new(x as f32, y as f32) * tiles;
+                let x_offset = Vector2::new(tiles.x * 0.5, -tiles.y * 0.5) * (x as f32);
+                let y_offset = Vector2::new(-tiles.x * 0.5, -tiles.y * 0.5) * (y as f32);
+                let cell_start_pos = x_offset + y_offset; // The start of the cell in world on screen
                 let pos = cell_start_pos - Vector2::new(tiles.x * 0.5, tiles.y);
 
+                // TODO Bug: tiles seem to be one pixel off in the y direction
+
                 // Add the tile to the batch
-                batch.push_tile(pos,
-                                tiles,
-                                Vector2::new(0.0, uv_per.y * 7.0),
-                                Vector2::new(uv_per.x, uv_per.y * 8.0));
+                batch.push_tile(
+                    pos,
+                    tiles,
+                    Vector2::new(uv_per.x * 0.0, uv_per.y * 7.0),
+                    Vector2::new(uv_per.x * 1.0, uv_per.y * 8.0)
+                );
             }
         }
 
