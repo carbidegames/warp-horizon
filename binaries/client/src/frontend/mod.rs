@@ -115,14 +115,15 @@ impl Frontend {
                 }
 
                 // Calculate some misc data about our tiles
-                let scale = 2.0;
+                let scale = 8.0;
                 let tile = Vector2::new(32.0, 15.0);
                 let tiles = tile * scale;
                 let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
-                let x_offset = Vector2::new(tiles.x * 0.5, -tiles.y * 0.5) * (x as f32);
-                let y_offset = Vector2::new(-tiles.x * 0.5, -tiles.y * 0.5) * (y as f32);
+                // the "+ 1.0*scale" bit is a hack to get it working, I don't know where the actual problem is
+                let x_offset = Vector2::new(tiles.x * 0.5, -(tiles.y + 1.0*scale) * 0.5) * (x as f32);
+                let y_offset = Vector2::new(-tiles.x * 0.5, -(tiles.y + 1.0*scale) * 0.5) * (y as f32);
                 let cell_start_pos = x_offset + y_offset; // The start of the cell in world on screen
                 let pos = cell_start_pos - Vector2::new(tiles.x * 0.5, tiles.y);
 
@@ -130,8 +131,7 @@ impl Frontend {
 
                 // Add the tile to the batch
                 batch.push_tile(
-                    pos,
-                    tiles,
+                    pos, tiles,
                     Vector2::new(uv_per.x * 0.0, uv_per.y * 7.0),
                     Vector2::new(uv_per.x * 1.0, uv_per.y * 8.0)
                 );
