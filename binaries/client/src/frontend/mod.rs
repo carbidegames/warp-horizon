@@ -1,4 +1,4 @@
-mod tile_batch;
+mod draw_batch;
 
 use std::path::Path;
 use cgmath;
@@ -10,7 +10,7 @@ use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
 use warp_horizon::{ClientState, Grid};
-use self::tile_batch::TileBatch;
+use self::draw_batch::*;
 
 #[derive(Copy, Clone)]
 struct SimpleVertex {
@@ -29,10 +29,19 @@ impl SimpleVertex {
     }
 }
 
+struct DrawResources {
+    pub display: GlutinFacade,
+    pub program: Program,
+    pub texture: SrgbTexture2d,
+}
+
+struct FrameResources<'a> {
+    pub target: &'a mut Frame,
+    pub matrix: &'a [[f32; 4]; 4],
+}
+
 pub struct Frontend {
-    display: GlutinFacade,
-    program: Program,
-    texture: SrgbTexture2d,
+    resources: DrawResources,
     should_exit: bool,
 }
 
@@ -61,16 +70,18 @@ impl Frontend {
 
         // Create the frontend struct
         Frontend {
-            display: display,
-            program: program,
-            texture: texture,
+            resources: DrawResources {
+                display: display,
+                program: program,
+                texture: texture,
+            },
             should_exit: false,
         }
     }
 
     pub fn process_events(&mut self) {
         // Poll all events
-        for ev in self.display.poll_events() {
+        for ev in self.resources.display.poll_events() {
             match ev {
                 Event::Closed => self.should_exit = true,
                 _ => (),
@@ -88,11 +99,19 @@ impl Frontend {
         );
 
         // Begin drawing
-        let mut target = self.display.draw();
+        let mut target = self.resources.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-        // Draw the grid
-        self.draw_grid(&matrix.into(), &mut target, state.main_grid());
+        {
+            // Create the container struct for the frame's resources
+            let mut frame = FrameResources {
+                target: &mut target,
+                matrix: &matrix.into()
+            };
+
+            // Draw the grid
+            self.draw_grid(&mut frame, state.main_grid());
+        }
 
         // Finish drawing
         target.finish().unwrap();
@@ -102,9 +121,9 @@ impl Frontend {
         self.should_exit
     }
 
-    fn draw_grid(&self, matrix: &[[f32; 4]; 4], target: &mut Frame, grid: &Grid) {
+    fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid) {
         // Set up the tile batch we can use to draw
-        let mut batch = TileBatch::new();
+        let mut batch = DrawBatch::new();
 
         // Actually send over the tile data
         for y in 0..grid.height() {
@@ -115,7 +134,7 @@ impl Frontend {
                 }
 
                 // Calculate some misc data about our tiles
-                let scale = 8.0;
+                let scale = 2.0;
                 let tile = Vector2::new(32.0, 15.0);
                 let tiles = tile * scale;
                 let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
@@ -127,8 +146,6 @@ impl Frontend {
                 let cell_start_pos = x_offset + y_offset; // The start of the cell in world on screen
                 let pos = cell_start_pos - Vector2::new(tiles.x * 0.5, tiles.y);
 
-                // TODO Bug: tiles seem to be one pixel off in the y direction
-
                 // Add the tile to the batch
                 batch.push_tile(
                     pos, tiles,
@@ -139,6 +156,6 @@ impl Frontend {
         }
 
         // Finally, draw
-        batch.draw(matrix, &self.texture, &self.display, &self.program, target);
+        batch.draw(&self.resources, frame);
     }
 }

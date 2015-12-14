@@ -1,19 +1,17 @@
 use cgmath::Vector2;
-use glium::{VertexBuffer, Surface, Program, DrawParameters, Blend, Frame};
+use glium::{VertexBuffer, Surface, DrawParameters, Blend};
 use glium::index::{NoIndices, PrimitiveType};
-use glium::backend::glutin_backend::GlutinFacade;
 use glium::draw_parameters::{BlendingFunction, LinearBlendingFactor, BackfaceCullingMode};
-use glium::texture::srgb_texture2d::SrgbTexture2d;
 use glium::uniforms::MagnifySamplerFilter;
-use frontend::SimpleVertex;
+use frontend::{SimpleVertex, DrawResources, FrameResources};
 
-pub struct TileBatch {
+pub struct DrawBatch {
     vertices: Vec<SimpleVertex>,
 }
 
-impl TileBatch {
+impl DrawBatch {
     pub fn new() -> Self {
-        TileBatch { vertices: Vec::new() }
+        DrawBatch { vertices: Vec::new() }
     }
 
     pub fn push_tile(
@@ -36,14 +34,11 @@ impl TileBatch {
 
     pub fn draw(
         &self,
-        matrix: &[[f32; 4]; 4],
-        texture: &SrgbTexture2d,
-        display: &GlutinFacade,
-        program: &Program,
-        target: &mut Frame
+        resources: &DrawResources,
+        frame: &mut FrameResources
     ) {
         // Turn the vertices into a VBO
-        let vertex_buffer = VertexBuffer::dynamic(display, &self.vertices).unwrap();
+        let vertex_buffer = VertexBuffer::dynamic(&resources.display, &self.vertices).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
 
         // Set up the drawing parameters for these vertices
@@ -61,11 +56,11 @@ impl TileBatch {
 
         // Actually render the vertices
         let uniforms = uniform! {
-            matrix: *matrix,
-            tex: texture
+            matrix: *frame.matrix,
+            tex: resources.texture
                 .sampled()
                 .magnify_filter(MagnifySamplerFilter::Nearest),
         };
-        target.draw(&vertex_buffer, &indices, &program, &uniforms, &params).unwrap();
+        frame.target.draw(&vertex_buffer, &indices, &resources.program, &uniforms, &params).unwrap();
     }
 }
