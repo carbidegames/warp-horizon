@@ -91,10 +91,17 @@ impl Frontend {
 
     pub fn render(&self, state: &ClientState) {
         // Create our projection matrix
+        // Our camera is a window onto an infinite plane, one pixel in graphics is one pixel on the
+        // plane. We change the window defined in the matrix rather than changing the position of
+        // vertices. The matrix however doesn't do the world-to-screen conversion, that's still
+        // done when putting together the vertices, we just take away the worry of having to move
+        // around depending on camera position away from those.
         let cam_pos = state.main_camera().position();
+        let cam_scale = state.main_camera().scale();
+        let cam_half_res = Vector2::new((1280 / cam_scale) as f32, (720 / cam_scale) as f32) * 0.5;
         let matrix = cgmath::ortho(
-            cam_pos.x, cam_pos.x + 1280.0,
-            cam_pos.y, cam_pos.y + 720.0,
+            cam_pos.x - cam_half_res.x, cam_pos.x + cam_half_res.x,
+            cam_pos.y - cam_half_res.y, cam_pos.y + cam_half_res.y,
             -10.0, 10.0
         );
 
@@ -134,21 +141,19 @@ impl Frontend {
                 }
 
                 // Calculate some misc data about our tiles
-                let scale = 2.0;
                 let tile = Vector2::new(32.0, 15.0);
-                let tiles = tile * scale;
                 let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
-                // the "+ 1.0*scale" bit is a hack to get it working, I don't know where the actual problem is
-                let x_offset = Vector2::new(tiles.x * 0.5, -(tiles.y + 1.0*scale) * 0.5) * (x as f32);
-                let y_offset = Vector2::new(-tiles.x * 0.5, -(tiles.y + 1.0*scale) * 0.5) * (y as f32);
+                // the "+ 1.0" bit is a hack to get it working, I don't know where the actual problem is
+                let x_offset = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (x as f32);
+                let y_offset = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (y as f32);
                 let cell_start_pos = x_offset + y_offset; // The start of the cell in world on screen
-                let pos = cell_start_pos - Vector2::new(tiles.x * 0.5, tiles.y);
+                let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
 
                 // Add the tile to the batch
                 batch.push_tile(
-                    pos, tiles,
+                    pos, tile,
                     Vector2::new(uv_per.x * 0.0, uv_per.y * 7.0),
                     Vector2::new(uv_per.x * 1.0, uv_per.y * 8.0)
                 );
