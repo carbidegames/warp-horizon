@@ -1,5 +1,5 @@
 [root]
-name = "warp-horizon-client"
+name = "warp-horizon-client-glium"
 version = "0.1.0"
 dependencies = [
  "cgmath 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",

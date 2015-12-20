@@ -21,10 +21,10 @@ fn main() {
         let delta = timer.tick();
 
         // Process events
-        frontend.process_events();
+        let events = frontend.process_events();
 
         // Update the game state
-        state.update(delta);
+        state.update(delta, &events);
 
         // Render
         frontend.render(&state);

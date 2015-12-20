@@ -1,6 +1,6 @@
 use cgmath::Vector2;
 use time::Duration;
-use client_state::input_state::{InputState, GameKey};
+use client_state::input_state::{InputState, GameButton};
 use frame_timer::UpdateDelta;
 
 pub struct Camera {
@@ -41,10 +41,10 @@ impl Camera {
     pub fn update(&mut self, state: &InputState, delta: Duration) {
         let mut direction = Vector2::new(0.0, 0.0);
 
-        if state.key(GameKey::MoveCameraRight) { direction.x += 1.0; }
-        if state.key(GameKey::MoveCameraLeft) { direction.x -= 1.0; }
-        if state.key(GameKey::MoveCameraUp) { direction.y += 1.0; }
-        if state.key(GameKey::MoveCameraDown) { direction.y -= 1.0; }
+        if state.key(GameButton::MoveCameraRight) { direction.x += 1.0; }
+        if state.key(GameButton::MoveCameraLeft) { direction.x -= 1.0; }
+        if state.key(GameButton::MoveCameraUp) { direction.y += 1.0; }
+        if state.key(GameButton::MoveCameraDown) { direction.y -= 1.0; }
 
         self.position = self.position + (delta.scale(direction) * self.move_speed);
     }
@@ -54,7 +54,7 @@ impl Camera {
 mod tests {
     use time::Duration;
     use client_state::camera::Camera;
-    use client_state::input_state::{InputState, GameKey};
+    use client_state::input_state::{InputState, GameButton};
 
     #[test]
     fn update_with_arrow_key_input_moves_camera() {
@@ -63,8 +63,8 @@ mod tests {
         assert!(camera.position().y == 0.0);
 
         let mut input_state = InputState::new();
-        input_state.set_key(GameKey::MoveCameraRight, true);
-        input_state.set_key(GameKey::MoveCameraUp, true);
+        input_state.set_key(GameButton::MoveCameraRight, true);
+        input_state.set_key(GameButton::MoveCameraUp, true);
 
         camera.update(&input_state, Duration::milliseconds(20));
 
@@ -80,7 +80,7 @@ mod tests {
         fast_cam.set_move_speed(2.0);
 
         let mut input_state = InputState::new();
-        input_state.set_key(GameKey::MoveCameraRight, true);
+        input_state.set_key(GameButton::MoveCameraRight, true);
 
         slow_cam.update(&input_state, Duration::milliseconds(20));
         fast_cam.update(&input_state, Duration::milliseconds(20));

@@ -4,12 +4,12 @@ use std::path::Path;
 use cgmath;
 use cgmath::Vector2;
 use glium::{DisplayBuild, Surface, Program, Frame};
-use glium::glutin::{WindowBuilder, Event};
+use glium::glutin::{WindowBuilder, Event, ElementState, VirtualKeyCode};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
-use warp_horizon::{ClientState, Grid};
+use warp_horizon::*;
 use self::draw_batch::*;
 
 #[derive(Copy, Clone)]
@@ -55,11 +55,11 @@ impl Frontend {
 
         // Load in the shaders
         let program = Program::from_source(
-            &display,
-            include_str!("vert.glsl"),
-            include_str!("frag.glsl"),
-            None
-        )
+                &display,
+                include_str!("vert.glsl"),
+                include_str!("frag.glsl"),
+                None
+            )
             .unwrap();
 
         // Load in the tileset
@@ -79,14 +79,39 @@ impl Frontend {
         }
     }
 
-    pub fn process_events(&mut self) {
-        // Poll all events
+    pub fn process_events(&mut self) -> Vec<FrontendEvent> {
+        let mut events = Vec::new();
+
+        // Poll all glutin events
         for ev in self.resources.display.poll_events() {
             match ev {
                 Event::Closed => self.should_exit = true,
-                _ => (),
+                Event::KeyboardInput(state, _scan_code, key_code) =>
+                    Self::process_key(&mut events, state, key_code),
+                _ => {},
             }
         }
+
+        events
+    }
+
+    fn process_key(
+        events: &mut Vec<FrontendEvent>,
+        state: ElementState, key: Option<VirtualKeyCode>
+    ) {
+        let key = match key.unwrap() {
+            VirtualKeyCode::Right => GameButton::MoveCameraRight,
+            VirtualKeyCode::Left => GameButton::MoveCameraLeft,
+            VirtualKeyCode::Up => GameButton::MoveCameraUp,
+            VirtualKeyCode::Down => GameButton::MoveCameraDown,
+            _ => return // We don't know about this key, so just do nothing
+        };
+        let event = match state {
+            ElementState::Pressed => FrontendEvent::Press(key),
+            ElementState::Released => FrontendEvent::Release(key),
+        };
+
+        events.push(event);
     }
 
     pub fn render(&self, state: &ClientState) {

@@ -1,5 +1,5 @@
 [package]
-name = "warp-horizon-client"
+name = "warp-horizon-client-glium"
 version = "0.1.0"
 authors = ["Layl <layl@edgeworksgames.com>"]
 
