@@ -35,7 +35,7 @@ impl Grid {
 }
 
 #[test]
-fn grid_creates_with_given_size() {
+fn creating_with_given_size() {
     let grid = Grid::new(40, 32);
     assert_eq!(grid.width(), 40);
     assert_eq!(grid.height(), 32);

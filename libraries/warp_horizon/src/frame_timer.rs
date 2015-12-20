@@ -1,11 +1,12 @@
+use std::ops::Mul;
 use time::{PreciseTime, Duration};
 
-pub trait TickDelta {
-    fn scale(&self, value: f32) -> f32;
+pub trait UpdateDelta {
+    fn scale<Val: Mul<f32>>(&self, value: Val) -> Val::Output;
 }
 
-impl TickDelta for Duration {
-    fn scale(&self, value: f32) -> f32 {
+impl UpdateDelta for Duration {
+    fn scale<Val: Mul<f32>>(&self, value: Val) -> Val::Output {
         value * (self.num_microseconds().unwrap() as f32 / 1_000_000.0)
     }
 }

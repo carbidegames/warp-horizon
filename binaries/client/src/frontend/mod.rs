@@ -97,7 +97,7 @@ impl Frontend {
         // done when putting together the vertices, we just take away the worry of having to move
         // around depending on camera position away from those.
         let cam_pos = state.main_camera().position();
-        let cam_scale = state.main_camera().scale();
+        let cam_scale = state.main_camera().zoom();
         let cam_half_res = Vector2::new((1280 / cam_scale) as f32, (720 / cam_scale) as f32) * 0.5;
         let matrix = cgmath::ortho(
             cam_pos.x - cam_half_res.x, cam_pos.x + cam_half_res.x,
@@ -107,7 +107,9 @@ impl Frontend {
 
         // Begin drawing
         let mut target = self.resources.display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        let mut brightness = 10.0 / 255.0;
+        brightness = (((brightness+0.055)/1.055) as f32).powf(2.4); // sRGB to Linear
+        target.clear_color(brightness, brightness, brightness, 1.0);
 
         {
             // Create the container struct for the frame's resources

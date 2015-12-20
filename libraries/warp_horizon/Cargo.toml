@@ -5,5 +5,6 @@ authors = ["Layl <layl@edgeworksgames.com>"]
 
 [dependencies]
 cgmath = "0.5"
+enum_primitive = "0.1.0"
 rand = "0.3"
 time = "0.1"
