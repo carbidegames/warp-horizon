@@ -43,8 +43,8 @@ enum_from_primitive! {
 
 #[cfg(test)]
 mod tests {
-    use client_state::input_state::{InputState, GameButton};
-    use client_state::frontend::{FrontendEvent};
+    use input_state::{InputState, GameButton};
+    use frontend::{FrontendEvent};
 
     #[test]
     fn key_returns_state_after_setting_key() {

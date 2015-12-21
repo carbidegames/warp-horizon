@@ -53,8 +53,8 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use time::Duration;
-    use client_state::camera::Camera;
-    use client_state::input_state::{InputState, GameButton};
+    use camera::Camera;
+    use input_state::{InputState, GameButton};
 
     #[test]
     fn update_with_arrow_key_input_moves_camera() {
