@@ -2,11 +2,13 @@ extern crate cgmath;
 #[macro_use] extern crate glium;
 extern crate image;
 extern crate warp_horizon;
+extern crate warp_horizon_client;
 
 mod frontend;
 
-use warp_horizon::*;
-use frontend::*;
+use warp_horizon::FrameTimer;
+use warp_horizon_client::ClientState;
+use frontend::Frontend;
 
 fn main() {
     // Initialize the frontend

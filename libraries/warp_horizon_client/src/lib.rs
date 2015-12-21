@@ -1,14 +1,19 @@
+extern crate cgmath;
+#[macro_use] extern crate enum_primitive;
+extern crate time;
+extern crate warp_horizon;
+
 mod camera;
 mod frontend;
 mod input_state;
 
 use cgmath::Vector2;
 use time::Duration;
-use Grid;
+use warp_horizon::Grid;
 
-pub use client_state::camera::{Camera};
-pub use client_state::frontend::{FrontendEvent};
-pub use client_state::input_state::{InputState, GameButton};
+pub use camera::{Camera};
+pub use frontend::{FrontendEvent};
+pub use input_state::{InputState, GameButton};
 
 pub struct ClientState {
     main_grid: Grid,

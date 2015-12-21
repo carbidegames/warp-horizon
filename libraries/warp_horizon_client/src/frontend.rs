@@ -1,4 +1,4 @@
-use client_state::input_state::GameButton;
+use input_state::GameButton;
 
 pub enum FrontendEvent {
     Press(GameButton),

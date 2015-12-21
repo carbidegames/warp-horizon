@@ -1,4 +1,4 @@
-use client_state::frontend::{FrontendEvent};
+use frontend::FrontendEvent;
 
 pub struct InputState {
     keys: Vec<bool>

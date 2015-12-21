@@ -1,7 +1,7 @@
 use cgmath::Vector2;
 use time::Duration;
-use client_state::input_state::{InputState, GameButton};
-use frame_timer::UpdateDelta;
+use input_state::{InputState, GameButton};
+use warp_horizon::UpdateDelta;
 
 pub struct Camera {
     position: Vector2<f32>,

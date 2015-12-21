@@ -9,8 +9,9 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
-use warp_horizon::*;
-use self::draw_batch::*;
+use warp_horizon::Grid;
+use warp_horizon_client::{FrontendEvent, GameButton, ClientState};
+use frontend::draw_batch::DrawBatch;
 
 #[derive(Copy, Clone)]
 struct SimpleVertex {

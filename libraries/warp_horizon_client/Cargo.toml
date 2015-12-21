@@ -1,10 +1,12 @@
 [package]
-name = "warp-horizon"
+name = "warp-horizon-client"
 version = "0.1.0"
 authors = ["Layl <layl@edgeworksgames.com>"]
 
 [dependencies]
 cgmath = "0.6"
 enum_primitive = "0.1"
-rand = "0.3"
 time = "0.1"
+
+[dependencies.warp-horizon]
+path = "../../libraries/warp_horizon"
