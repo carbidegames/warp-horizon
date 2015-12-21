@@ -23,7 +23,7 @@ pub struct ClientState {
 
 impl ClientState {
     pub fn new() -> Self {
-        let mut cam = Camera::new();
+        let mut cam = Camera::new(Vector2::new(1280, 720));
         cam.set_position(Vector2::new(0.0, 0.0));
         cam.set_zoom(2);
         cam.set_move_speed(80.0);

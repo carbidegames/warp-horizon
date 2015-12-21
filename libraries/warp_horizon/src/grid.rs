@@ -1,6 +1,6 @@
 use rand::{XorShiftRng, SeedableRng, Rng};
 
-/// Represents a single game grid.
+/// A representation of a single game grid.
 pub struct Grid {
     tiles: Vec<i32>,
     width: i32,

@@ -174,9 +174,9 @@ impl Frontend {
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
                 // the "+ 1.0" bit is a hack to get it working, I don't know where the actual problem is
-                let x_offset = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (x as f32);
-                let y_offset = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (y as f32);
-                let cell_start_pos = x_offset + y_offset; // The start of the cell in world on screen
+                let offset_from_x = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (x as f32);
+                let offset_from_y = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (y as f32);
+                let cell_start_pos = offset_from_x + offset_from_y; // The start of the cell in world on screen
                 let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
 
                 // Add the tile to the batch
