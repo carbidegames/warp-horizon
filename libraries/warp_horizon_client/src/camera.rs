@@ -42,18 +42,30 @@ impl Camera {
         self.move_speed = value;
     }
 
-    pub fn screen_to_world(&mut self, value: Vector2<i32>) -> Vector2<f32> {
-        // TODO: Doesn't take into account zoom or position
-        
+    fn screen_to_renderplane(&self, value: Vector2<i32>) -> Vector2<f32> {
+        // Get the distance from the center of the screen in screen coordinates
+        let from_center: Vector2<f32> = (value - (self.resolution/2)).cast();
+
+        // Calculate the distance from the center of the screen in renderplane coordinates and
+        // add those to the position of the center
+        self.position + (from_center / (self.zoom as f32))
+    }
+
+    fn renderplane_to_world(&self, value: Vector2<f32>) -> Vector2<f32> {
         // Misc trivial data before the actual calculation
         let tile = Vector2::new(32.0, 15.0);
-        let from_center = (value - (self.resolution/2)).cast::<f32>();
 
-        // Actually do the calculation
-        let offset_from_x = Vector2::new(1.0, -1.0) * (from_center.x / tile.x);
-        let offset_from_y = Vector2::new(1.0, 1.0) * (from_center.y / tile.y);
+        // The actual calculation just adds a certain amount to world-x and world-y per each
+        // screen-x and screen-y, there's some room for optimization here if it becomes a problem
+        let offset_from_x = Vector2::new(1.0, -1.0) * (value.x / tile.x);
+        let offset_from_y = Vector2::new(1.0, 1.0) * (value.y / tile.y);
 
         offset_from_x + offset_from_y
+    }
+
+    /// Calculates the equivalent coordinates in world for coordinates on screen.
+    pub fn screen_to_world(&self, value: Vector2<i32>) -> Vector2<f32> {
+        self.renderplane_to_world(self.screen_to_renderplane(value))
     }
 
     pub fn update(&mut self, state: &InputState, delta: Duration) {
@@ -109,7 +121,7 @@ mod tests {
 
     #[test]
     fn screen_to_world_returns_correct_tile_at_origin_with_no_zoom() {
-        let mut cam = Camera::new(Vector2::new(100, 50));
+        let cam = Camera::new(Vector2::new(100, 50));
 
         // Origin
         let world1 = cam.screen_to_world(Vector2::new(50, 26));
@@ -130,5 +142,37 @@ mod tests {
         let world3 = cam.screen_to_world(Vector2::new(50 + 16, 26 + (15*20)));
         assert_eq!(world3.x.floor(), 20.0);
         assert_eq!(world3.y.floor(), 19.0);
+    }
+
+    #[test]
+    fn screen_to_world_returns_correct_tile_with_zooming() {
+        let mut cam = Camera::new(Vector2::new(100, 50));
+        cam.set_zoom(4);
+
+        // Origin
+        let world1 = cam.screen_to_world(Vector2::new(50, 26));
+        assert_eq!(world1.x.floor(), 0.0);
+        assert_eq!(world1.y.floor(), 0.0);
+
+        // Origin + 1 tile size down
+        let world2 = cam.screen_to_world(Vector2::new(50, 26 + 60));
+        assert_eq!(world2.x.floor(), 1.0);
+        assert_eq!(world2.y.floor(), 1.0);
+    }
+
+    #[test]
+    fn screen_to_world_returns_correct_tile_with_position() {
+        let mut cam = Camera::new(Vector2::new(100, 50));
+        cam.set_position(Vector2::new(-16.0, 30.0));
+
+        // Middle of screen
+        let world1 = cam.screen_to_world(Vector2::new(50, 26));
+        assert_eq!(world1.x.floor(), 1.0);
+        assert_eq!(world1.y.floor(), 2.0);
+
+        // Middle of screen + 1 tile size down
+        let world2 = cam.screen_to_world(Vector2::new(50, 26 + 15));
+        assert_eq!(world2.x.floor(), 2.0);
+        assert_eq!(world2.y.floor(), 3.0);
     }
 }
