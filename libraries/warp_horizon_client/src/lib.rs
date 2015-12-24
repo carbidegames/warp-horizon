@@ -68,7 +68,8 @@ impl GameController {
     }
 
     pub fn update(&mut self, input_state: &InputState, camera: &Camera) {
-        self.selected_tile = camera.screen_to_world(input_state.mouse_position()).cast();
+        let tile_f = camera.screen_to_world(input_state.mouse_position());
+        self.selected_tile = Vector2::new(tile_f.x.floor() as i32, tile_f.y.floor() as i32);
     }
 
     pub fn selected_tile(&self) -> Vector2<i32> {
