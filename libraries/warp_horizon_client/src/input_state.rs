@@ -23,8 +23,12 @@ impl InputState {
         self.keys[key as usize] = state;
     }
 
-    pub fn mouse_position(&mut self) -> Vector2<i32> {
+    pub fn mouse_position(&self) -> Vector2<i32> {
         self.mouse_position
+    }
+
+    pub fn set_mouse_position(&mut self, value: Vector2<i32>) {
+        self.mouse_position = value;
     }
 
     pub fn update(&mut self, events: &[FrontendEvent]) {
