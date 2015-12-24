@@ -50,6 +50,10 @@ impl ClientState {
     pub fn main_camera(&self) -> &Camera {
         &self.main_camera
     }
+
+    pub fn controller(&self) -> &GameController {
+        &self.controller
+    }
 }
 
 pub struct GameController {

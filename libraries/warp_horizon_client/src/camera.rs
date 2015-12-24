@@ -57,8 +57,10 @@ impl Camera {
 
         // The actual calculation just adds a certain amount to world-x and world-y per each
         // screen-x and screen-y, there's some room for optimization here if it becomes a problem
+        // The +1 is needed on the y because there's 1 pixel of extra distance so the tiles
+        // can slot together better
         let offset_from_x = Vector2::new(1.0, -1.0) * (value.x / tile.x);
-        let offset_from_y = Vector2::new(1.0, 1.0) * (value.y / tile.y);
+        let offset_from_y = Vector2::new(1.0, 1.0) * (value.y / (tile.y+1.0));
 
         offset_from_x + offset_from_y
     }
@@ -129,7 +131,7 @@ mod tests {
         assert_eq!(world1.y.floor(), 0.0);
 
         // Difference in the Y direction
-        let world2 = cam.screen_to_world(Vector2::new(50, 26 + 15));
+        let world2 = cam.screen_to_world(Vector2::new(50, 26 + 16));
         assert_eq!(world2.x.floor(), 1.0);
         assert_eq!(world2.y.floor(), 1.0);
 
@@ -139,7 +141,7 @@ mod tests {
         assert_eq!(world3.y.floor(), -1.0);
 
         // More complex position
-        let world3 = cam.screen_to_world(Vector2::new(50 + 16, 26 + (15*20)));
+        let world3 = cam.screen_to_world(Vector2::new(50 + 16, 26 + (16*20)));
         assert_eq!(world3.x.floor(), 20.0);
         assert_eq!(world3.y.floor(), 19.0);
     }
@@ -155,7 +157,7 @@ mod tests {
         assert_eq!(world1.y.floor(), 0.0);
 
         // Origin + 1 tile size down
-        let world2 = cam.screen_to_world(Vector2::new(50, 26 + 60));
+        let world2 = cam.screen_to_world(Vector2::new(50, 26 + (16*4)));
         assert_eq!(world2.x.floor(), 1.0);
         assert_eq!(world2.y.floor(), 1.0);
     }
