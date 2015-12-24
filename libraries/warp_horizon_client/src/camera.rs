@@ -44,7 +44,10 @@ impl Camera {
 
     fn screen_to_renderplane(&self, value: Vector2<i32>) -> Vector2<f32> {
         // Get the distance from the center of the screen in screen coordinates
-        let from_center: Vector2<f32> = (value - (self.resolution/2)).cast();
+        let mut from_center: Vector2<f32> = (value - (self.resolution/2)).cast();
+
+        // Screen coordinates are top-bottom y, renderplane coordinates are bottom-top y
+        from_center.y = -from_center.y;
 
         // Calculate the distance from the center of the screen in renderplane coordinates and
         // add those to the position of the center
@@ -60,7 +63,7 @@ impl Camera {
         // The +1 is needed on the y because there's 1 pixel of extra distance so the tiles
         // can slot together better
         let offset_from_x = Vector2::new(1.0, -1.0) * (value.x / tile.x);
-        let offset_from_y = Vector2::new(1.0, 1.0) * (value.y / (tile.y+1.0));
+        let offset_from_y = Vector2::new(-1.0, -1.0) * (value.y / (tile.y+1.0));
 
         offset_from_x + offset_from_y
     }
@@ -165,7 +168,7 @@ mod tests {
     #[test]
     fn screen_to_world_returns_correct_tile_with_position() {
         let mut cam = Camera::new(Vector2::new(100, 50));
-        cam.set_position(Vector2::new(-16.0, 30.0));
+        cam.set_position(Vector2::new(-16.0, -30.0));
 
         // Middle of screen
         let world1 = cam.screen_to_world(Vector2::new(50, 26));
