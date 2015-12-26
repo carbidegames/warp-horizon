@@ -89,8 +89,8 @@ impl Frontend {
                 Event::Closed => self.should_exit = true,
                 Event::KeyboardInput(state, _scan_code, key_code) =>
                     Self::process_key(&mut events, state, key_code),
-                Event::MouseMoved((x, y)) =>
-                    events.push(FrontendEvent::MouseMove(Vector2::new(x, y))),
+                Event::MouseMoved(pos) =>
+                    events.push(FrontendEvent::MouseMove(pos.into())),
                 _ => {},
             }
         }
