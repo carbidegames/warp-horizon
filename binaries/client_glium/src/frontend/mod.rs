@@ -167,8 +167,9 @@ impl Frontend {
         let mut batch = DrawBatch::new();
 
         // Actually send over the tile data
-        for y in 0..grid.height() {
-            for x in 0..grid.width() {
+        let size = grid.size();
+        for y in 0..size.x {
+            for x in 0..size.y {
                 // If the tile is 0, there's nothing here
                 if grid.get(x, y).unwrap() == 0 {
                     continue;

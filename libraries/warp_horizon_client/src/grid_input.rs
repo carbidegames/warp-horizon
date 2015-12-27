@@ -51,7 +51,7 @@ mod tests {
         let mut grid_input = GridInputController::new();
         let mut input_state = InputState::new();
         let camera = Camera::new(Vector2::new(100, 50));
-        let grid = Grid::new(10, 10);
+        let grid = Grid::new(Vector2::new(10, 10));
 
         input_state.set_mouse_position(Vector2::new(50, 26 + 15));
         grid_input.update(&grid, &camera, &input_state);
@@ -64,7 +64,7 @@ mod tests {
         let mut grid_input = GridInputController::new();
         let mut input_state = InputState::new();
         let camera = Camera::new(Vector2::new(100, 50));
-        let grid = Grid::new(10, 10);
+        let grid = Grid::new(Vector2::new(10, 10));
 
         input_state.set_mouse_position(Vector2::new(50, 10));
         grid_input.update(&grid, &camera, &input_state);

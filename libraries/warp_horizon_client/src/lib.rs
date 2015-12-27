@@ -32,7 +32,7 @@ impl ClientState {
         cam.set_move_speed(80.0);
 
         ClientState {
-            main_grid: Grid::new(100, 100),
+            main_grid: Grid::new(Vector2::new(100, 100)),
             main_camera: cam,
             input_state: InputState::new(),
             grid_input: GridInputController::new(),
