@@ -10,7 +10,7 @@ use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
 use warp_horizon::Grid;
-use warp_horizon_client::{FrontendEvent, GameButton, ClientState, GameController};
+use warp_horizon_client::{FrontendEvent, GameButton, ClientState, GameController, Camera};
 use frontend::draw_batch::DrawBatch;
 
 #[derive(Copy, Clone)]
@@ -66,8 +66,8 @@ impl Frontend {
         // Load in the tileset
         let image = image::open(&Path::new("./assets/tiles.png")).unwrap().to_rgba();
         let image_dimensions = image.dimensions();
-        let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-        let texture = SrgbTexture2d::new(&display, image).unwrap();
+        let raw_image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
+        let texture = SrgbTexture2d::new(&display, raw_image).unwrap();
 
         // Create the frontend struct
         Frontend {
@@ -147,7 +147,7 @@ impl Frontend {
             };
 
             // Draw the grid
-            self.draw_grid(&mut frame, state.main_grid(), state.controller());
+            self.draw_grid(&mut frame, state.main_grid(), state.main_camera(), state.controller());
         }
 
         // Finish drawing
@@ -158,7 +158,7 @@ impl Frontend {
         self.should_exit
     }
 
-    fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid, controller: &GameController) {
+    fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid, camera: &Camera, controller: &GameController) {
         // Calculate some misc data about our tiles
         let tile = Vector2::new(32.0, 15.0);
         let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
@@ -175,12 +175,7 @@ impl Frontend {
                 }
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
-                // The +1 is needed on the y because there's 1 pixel of extra distance so the tiles
-                // can slot together better
-                // TODO: Move this to camera along with the duplicate down below
-                let offset_from_x = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (x as f32);
-                let offset_from_y = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (y as f32);
-                let cell_start_pos = offset_from_x + offset_from_y; // The start of the cell in world on renderplane
+                let cell_start_pos = camera.world_to_renderplane(Vector2::new(x as f32, y as f32));
                 let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
 
                 // Add the tile to the batch
@@ -194,9 +189,7 @@ impl Frontend {
 
         // Draw the selection indicator
         let selection = controller.selected_tile();
-        let offset_from_x = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (selection.x as f32);
-        let offset_from_y = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * (selection.y as f32);
-        let cell_start_pos = offset_from_x + offset_from_y; // The start of the cell in world on renderplane
+        let cell_start_pos = camera.world_to_renderplane(selection.cast());
         let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
         batch.push_tile(
             pos, tile,

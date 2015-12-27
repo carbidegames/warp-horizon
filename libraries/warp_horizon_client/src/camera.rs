@@ -55,7 +55,6 @@ impl Camera {
     }
 
     fn renderplane_to_world(&self, value: Vector2<f32>) -> Vector2<f32> {
-        // Misc trivial data before the actual calculation
         let tile = Vector2::new(32.0, 15.0);
 
         // The actual calculation just adds a certain amount to world-x and world-y per each
@@ -71,6 +70,17 @@ impl Camera {
     /// Calculates the equivalent coordinates in world for coordinates on screen.
     pub fn screen_to_world(&self, value: Vector2<i32>) -> Vector2<f32> {
         self.renderplane_to_world(self.screen_to_renderplane(value))
+    }
+
+    pub fn world_to_renderplane(&self, value: Vector2<f32>) -> Vector2<f32> {
+        let tile = Vector2::new(32.0, 15.0);
+
+        // The +1 is needed on the y because there's 1 pixel of extra distance so the tiles
+        // can slot together better
+        let offset_from_x = Vector2::new(tile.x * 0.5, -(tile.y + 1.0) * 0.5) * value.x;
+        let offset_from_y = Vector2::new(-tile.x * 0.5, -(tile.y + 1.0) * 0.5) * value.y;
+
+        offset_from_x + offset_from_y
     }
 
     pub fn update(&mut self, state: &InputState, delta: Duration) {
