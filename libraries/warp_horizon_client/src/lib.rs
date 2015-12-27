@@ -5,7 +5,7 @@ extern crate warp_horizon;
 
 mod camera;
 mod frontend;
-mod game_controller;
+mod grid_input;
 mod input_state;
 
 use cgmath::Vector2;
@@ -14,14 +14,14 @@ use warp_horizon::Grid;
 
 pub use camera::{Camera};
 pub use frontend::{FrontendEvent};
-pub use game_controller::{GameController};
+pub use grid_input::{GridInputController};
 pub use input_state::{InputState, GameButton};
 
 pub struct ClientState {
     main_grid: Grid,
     main_camera: Camera,
     input_state: InputState,
-    controller: GameController,
+    grid_input: GridInputController,
 }
 
 impl ClientState {
@@ -35,14 +35,14 @@ impl ClientState {
             main_grid: Grid::new(100, 100),
             main_camera: cam,
             input_state: InputState::new(),
-            controller: GameController::new(),
+            grid_input: GridInputController::new(),
         }
     }
 
     pub fn update(&mut self, delta: Duration, events: &[FrontendEvent]) {
         self.input_state.update(events);
         self.main_camera.update(&self.input_state, delta);
-        self.controller.update(&self.input_state, &self.main_camera);
+        self.grid_input.update(&self.main_grid, &self.main_camera, &self.input_state);
     }
 
     pub fn main_grid(&self) -> &Grid {
@@ -53,7 +53,7 @@ impl ClientState {
         &self.main_camera
     }
 
-    pub fn controller(&self) -> &GameController {
-        &self.controller
+    pub fn grid_input(&self) -> &GridInputController {
+        &self.grid_input
     }
 }

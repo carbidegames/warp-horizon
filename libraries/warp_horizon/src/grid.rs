@@ -30,18 +30,36 @@ impl Grid {
     }
 
     pub fn get(&self, x: i32, y: i32) -> Option<i32> {
+        // Sanity check X
+        if x < 0 || x >= self.width { return None; }
+
+        // Actually perform the lookup
         self.tiles.get((x + y * self.width) as usize).map(|v| *v)
     }
 }
 
-#[test]
-fn creating_with_given_size() {
-    let grid = Grid::new(40, 32);
-    assert_eq!(grid.width(), 40);
-    assert_eq!(grid.height(), 32);
+#[cfg(test)]
+mod tests {
+    use grid::Grid;
 
-    // Make sure we can actually access within that area
-    assert!(grid.get(0, 0).is_some());
-    assert!(grid.get(39, 31).is_some());
-    assert!(grid.get(40, 32).is_none());
+    #[test]
+    fn new_creates_with_given_size() {
+        let grid = Grid::new(40, 32);
+        assert_eq!(grid.width(), 40);
+        assert_eq!(grid.height(), 32);
+
+        // Make sure we can actually access within that area
+        assert!(grid.get(0, 0).is_some());
+        assert!(grid.get(39, 31).is_some());
+        assert!(grid.get(40, 32).is_none());
+    }
+
+    #[test]
+    fn get_returns_none_on_invalid_tiles() {
+        let grid = Grid::new(10, 10);
+
+        assert_eq!(grid.get(-1, -1), None);
+        assert_eq!(grid.get(1, -1), None);
+        assert_eq!(grid.get(-1, 1), None);
+    }
 }

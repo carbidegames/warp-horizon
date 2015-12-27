@@ -10,7 +10,7 @@ use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
 use warp_horizon::Grid;
-use warp_horizon_client::{FrontendEvent, GameButton, ClientState, GameController, Camera};
+use warp_horizon_client::{FrontendEvent, GameButton, ClientState, GridInputController, Camera};
 use frontend::draw_batch::DrawBatch;
 
 #[derive(Copy, Clone)]
@@ -147,7 +147,7 @@ impl Frontend {
             };
 
             // Draw the grid
-            self.draw_grid(&mut frame, state.main_grid(), state.main_camera(), state.controller());
+            self.draw_grid(&mut frame, state.main_grid(), state.main_camera(), state.grid_input());
         }
 
         // Finish drawing
@@ -158,7 +158,7 @@ impl Frontend {
         self.should_exit
     }
 
-    fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid, camera: &Camera, controller: &GameController) {
+    fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid, camera: &Camera, grid_input: &GridInputController) {
         // Calculate some misc data about our tiles
         let tile = Vector2::new(32.0, 15.0);
         let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
@@ -187,15 +187,16 @@ impl Frontend {
             }
         }
 
-        // Draw the selection indicator
-        let selection = controller.selected_tile();
-        let cell_start_pos = camera.world_to_renderplane(selection.cast());
-        let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
-        batch.push_tile(
-            pos, tile,
-            Vector2::new(uv_per.x * 0.0, uv_per.y * 6.0),
-            Vector2::new(uv_per.x * 1.0, uv_per.y * 7.0)
-        );
+        // Draw the selection indicator if we have to
+        if let Some(selection) = grid_input.selected_tile() {
+            let cell_start_pos = camera.world_to_renderplane(selection.cast());
+            let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
+            batch.push_tile(
+                pos, tile,
+                Vector2::new(uv_per.x * 0.0, uv_per.y * 6.0),
+                Vector2::new(uv_per.x * 1.0, uv_per.y * 7.0)
+            );
+        }
 
         // Finally, draw
         batch.draw(&self.resources, frame);
