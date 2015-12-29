@@ -4,5 +4,9 @@ use input_state::GameButton;
 pub enum FrontendEvent {
     Press(GameButton),
     Release(GameButton),
-    MouseMove(Vector2<i32>)
+    MouseMove(Vector2<i32>),
+    Focus,
+    Unfocus,
+    #[doc(hidden)]
+    __DontMatchMe,
 }

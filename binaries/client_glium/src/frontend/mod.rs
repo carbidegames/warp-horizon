@@ -92,6 +92,8 @@ impl Frontend {
                     Self::process_key(&mut events, state, key_code),
                 Event::MouseMoved(pos) =>
                     events.push(FrontendEvent::MouseMove(pos.into())),
+                Event::Focused(focus) =>
+                    events.push(if focus {FrontendEvent::Focus} else {FrontendEvent::Unfocus}),
                 _ => {},
             }
         }
@@ -180,7 +182,6 @@ impl Frontend {
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
                 let cell_start_pos = camera.world_to_renderplane(Vector2::new(x as f32, y as f32));
-                //let pos = cell_start_pos - Vector2::new(tile_size.x as f32 * 0.5, tile_size.y as f32);
                 let pos = cell_start_pos - (tile_size.cast() * Vector2::new(0.5, 1.0));
 
                 // Add the tile to the batch

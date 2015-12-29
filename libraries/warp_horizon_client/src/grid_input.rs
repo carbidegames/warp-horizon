@@ -25,12 +25,16 @@ impl GridInputController {
     }
 
     pub fn update(&mut self, grid: &Grid, camera: &Camera, input_state: &InputState) {
-        let tile_f = camera.screen_to_world(input_state.mouse_position());
-        let tile = tile_f.containing_tile();
+        if let Some(pos) = input_state.mouse_position() {
+            let tile_f = camera.screen_to_world(pos);
+            let tile = tile_f.containing_tile();
 
-        self.selected_tile =
-            if grid.get(tile).is_some() { Some(tile) }
-            else { None };
+            self.selected_tile =
+                if grid.get(tile).is_some() { Some(tile) }
+                else { None };
+        } else {
+            self.selected_tile = None;
+        }
     }
 
     pub fn selected_tile(&self) -> Option<Vector2<i32>> {
@@ -67,6 +71,20 @@ mod tests {
         let grid = Grid::new(Vector2::new(10, 10));
 
         input_state.set_mouse_position(Vector2::new(50, 10));
+        grid_input.update(&grid, &camera, &input_state);
+
+        assert_eq!(grid_input.selected_tile(), None);
+    }
+
+    #[test]
+    fn selected_tile_returns_none_if_unfocused() {
+        let mut grid_input = GridInputController::new();
+        let mut input_state = InputState::new();
+        let camera = Camera::new(Vector2::new(100, 50));
+        let grid = Grid::new(Vector2::new(10, 10));
+
+        input_state.set_mouse_position(Vector2::new(50, 26 + 15));
+        input_state.set_focused(false);
         grid_input.update(&grid, &camera, &input_state);
 
         assert_eq!(grid_input.selected_tile(), None);
