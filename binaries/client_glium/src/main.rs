@@ -1,6 +1,7 @@
 extern crate cgmath;
 #[macro_use] extern crate glium;
 extern crate image;
+extern crate uv_utils;
 extern crate warp_horizon;
 extern crate warp_horizon_client;
 

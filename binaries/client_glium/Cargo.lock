@@ -5,6 +5,7 @@ dependencies = [
  "cgmath 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uv-utils 0.1.0",
  "warp-horizon 0.1.0",
  "warp-horizon-client 0.1.0",
 ]
@@ -501,6 +502,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "uv-utils"
+version = "0.1.0"
+dependencies = [
+ "cgmath 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

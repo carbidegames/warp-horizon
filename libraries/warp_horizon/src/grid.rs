@@ -26,15 +26,15 @@ impl Grid {
         self.size
     }
 
-    pub fn get(&self, x: i32, y: i32) -> Option<i32> {
+    pub fn get(&self, cell: Vector2<i32>) -> Option<i32> {
         // Sanity check the x and y
-        if x < 0 || x >= self.size.x ||
-           y < 0 || y >= self.size.y {
+        if cell.x < 0 || cell.x >= self.size.x ||
+           cell.y < 0 || cell.y >= self.size.y {
             return None;
         }
 
         // Actually perform the lookup
-        self.tiles.get((x + y * self.size.x) as usize).map(|v| *v)
+        self.tiles.get((cell.x + cell.y*self.size.x) as usize).map(|v| *v)
     }
 }
 
@@ -49,17 +49,17 @@ mod tests {
         assert_eq!(grid.size(), Vector2::new(40, 32));
 
         // Make sure we can actually access within that area
-        assert!(grid.get(0, 0).is_some());
-        assert!(grid.get(39, 31).is_some());
-        assert!(grid.get(40, 32).is_none());
+        assert!(grid.get(Vector2::new(0, 0)).is_some());
+        assert!(grid.get(Vector2::new(39, 31)).is_some());
+        assert!(grid.get(Vector2::new(40, 32)).is_none());
     }
 
     #[test]
     fn get_returns_none_on_invalid_tiles() {
         let grid = Grid::new(Vector2::new(10, 10));
 
-        assert_eq!(grid.get(-1, -1), None);
-        assert_eq!(grid.get(1, -1), None);
-        assert_eq!(grid.get(-1, 1), None);
+        assert_eq!(grid.get(Vector2::new(-1, -1)), None);
+        assert_eq!(grid.get(Vector2::new(1, -1)), None);
+        assert_eq!(grid.get(Vector2::new(-1, 1)), None);
     }
 }

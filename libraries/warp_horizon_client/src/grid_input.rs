@@ -29,7 +29,7 @@ impl GridInputController {
         let tile = tile_f.containing_tile();
 
         self.selected_tile =
-            if grid.get(tile.x, tile.y).is_some() { Some(tile) }
+            if grid.get(tile).is_some() { Some(tile) }
             else { None };
     }
 

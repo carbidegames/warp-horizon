@@ -8,6 +8,9 @@ cgmath = "0.7"
 glium = "0.13"
 image = "0.6"
 
+[dependencies.uv-utils]
+path = "../../libraries/uv_utils"
+
 [dependencies.warp-horizon]
 path = "../../libraries/warp_horizon"
 
