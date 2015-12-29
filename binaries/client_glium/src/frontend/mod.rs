@@ -9,6 +9,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::texture::RawImage2d;
 use glium::texture::srgb_texture2d::SrgbTexture2d;
 use image;
+use uv_utils::PixelsUv;
 use warp_horizon::Grid;
 use warp_horizon_client::{FrontendEvent, GameButton, ClientState, GridInputController, Camera};
 use frontend::draw_batch::DrawBatch;
@@ -159,9 +160,11 @@ impl Frontend {
     }
 
     fn draw_grid(&self, frame: &mut FrameResources, grid: &Grid, camera: &Camera, grid_input: &GridInputController) {
-        // Calculate some misc data about our tiles
-        let tile = Vector2::new(32.0, 15.0);
-        let uv_per = Vector2::new(1.0 / (256.0 / tile.x), 1.0 / (120.0 / tile.y));
+        // Some misc data about our tiles
+        let tile_size = Vector2::new(32, 15);
+        let tileset = PixelsUv::full([256, 120]);
+        let ground_tile = tileset.subtexture([0, 0], tile_size.into()).to_opengl().correct_fp_error();
+        let selection_tile = tileset.subtexture([0, 15], tile_size.into()).to_opengl().correct_fp_error();
 
         // Set up the tile batch we can use to draw
         let mut batch = DrawBatch::new();
@@ -177,13 +180,13 @@ impl Frontend {
 
                 // Calculate the start of the grid cell this tile is in and where we have to draw
                 let cell_start_pos = camera.world_to_renderplane(Vector2::new(x as f32, y as f32));
-                let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
+                //let pos = cell_start_pos - Vector2::new(tile_size.x as f32 * 0.5, tile_size.y as f32);
+                let pos = cell_start_pos - (tile_size.cast() * Vector2::new(0.5, 1.0));
 
                 // Add the tile to the batch
                 batch.push_tile(
-                    pos, tile,
-                    Vector2::new(uv_per.x * 0.0, uv_per.y * 7.0),
-                    Vector2::new(uv_per.x * 1.0, uv_per.y * 8.0)
+                    pos, tile_size.cast(),
+                    ground_tile.start().into(), ground_tile.end().into()
                 );
             }
         }
@@ -191,11 +194,10 @@ impl Frontend {
         // Draw the selection indicator if we have to
         if let Some(selection) = grid_input.selected_tile() {
             let cell_start_pos = camera.world_to_renderplane(selection.cast());
-            let pos = cell_start_pos - Vector2::new(tile.x * 0.5, tile.y);
+            let pos = cell_start_pos - (tile_size.cast() * Vector2::new(0.5, 1.0));
             batch.push_tile(
-                pos, tile,
-                Vector2::new(uv_per.x * 0.0, uv_per.y * 6.0),
-                Vector2::new(uv_per.x * 1.0, uv_per.y * 7.0)
+                pos, tile_size.cast(),
+                selection_tile.start().into(), selection_tile.end().into()
             );
         }
 

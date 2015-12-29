@@ -72,7 +72,7 @@ impl OpenGlUv {
 
     /// Slightly adjusts start and end to correct for floating point errors.
     pub fn correct_fp_error(&self) -> Self {
-        let c = 0.0001;
+        let c = 0.00001;
 
         let start = [self.start[0] + c, self.start[1] + c];
         let end = [self.end[0] - c, self.end[1] - c];
