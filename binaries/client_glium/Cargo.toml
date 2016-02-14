@@ -1,18 +1,9 @@
 [package]
-name = "warp-horizon-client-glium"
+name = "warphorizon_client_glium"
 version = "0.1.0"
-authors = ["Layl <layl@edgeworksgames.com>"]
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = "0.7"
-glium = "0.13"
-image = "0.6"
-
-[dependencies.uv-utils]
-path = "../../libraries/uv_utils"
-
-[dependencies.warp-horizon]
-path = "../../libraries/warp_horizon"
-
-[dependencies.warp-horizon-client]
-path = "../../libraries/warp_horizon_client"
+cgmath = "0.7.0"
+glium = "0.13.5"
+wavefront_obj = "3.0.0"
