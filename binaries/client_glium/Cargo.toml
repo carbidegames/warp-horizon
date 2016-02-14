@@ -1,5 +1,5 @@
 [package]
-name = "warphorizon_client_glium"
+name = "warphorizon-client-glium"
 version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
@@ -7,3 +7,6 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.7.0"
 glium = "0.13.5"
 wavefront_obj = "3.0.0"
+
+[dependencies.warphorizon-client]
+path = "../../libraries/client"

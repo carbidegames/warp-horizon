@@ -3,8 +3,9 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::draw_parameters::BackfaceCullingMode;
 use glium::glutin::{Event, ElementState, VirtualKeyCode, WindowBuilder};
 use glium::index::{NoIndices, PrimitiveType};
-use cgmath::{PerspectiveFov, Matrix, Matrix4, Vector2, Vector4, Angle, Rad, Deg, SquareMatrix};
+use cgmath::{PerspectiveFov, Matrix, Matrix4, Vector4, Angle, Rad, Deg, SquareMatrix};
 use wavefront_obj::obj::{self, Object, Shape, VTNIndex};
+use whc::{FrontendEvent, GameButton};
 use client_state::ClientState;
 
 #[derive(Copy, Clone)]
@@ -28,22 +29,6 @@ impl Vertex {
             color: [0.6, 0.6, 0.6]
         }
     }
-}
-
-pub enum GameButton {
-    MovePlayerRight,
-    MovePlayerLeft,
-    MovePlayerForward,
-    MovePlayerBackward,
-    RequestClose
-}
-
-pub enum FrontendEvent {
-    CursorMove(Vector2<i32>),
-    Press(GameButton),
-    Release(GameButton),
-    #[doc(hidden)]
-    __DoNotMatch
 }
 
 pub struct Frontend {

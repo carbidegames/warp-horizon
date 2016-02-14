@@ -1,0 +1,9 @@
+[package]
+name = "warphorizon-client"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.7.0"
+enum_primitive = "0.1.0"
+time = "0.1.34"
