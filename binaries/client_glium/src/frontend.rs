@@ -5,8 +5,7 @@ use glium::glutin::{Event, ElementState, VirtualKeyCode, WindowBuilder};
 use glium::index::{NoIndices, PrimitiveType};
 use cgmath::{PerspectiveFov, Matrix, Matrix4, Vector4, Angle, Rad, Deg, SquareMatrix};
 use wavefront_obj::obj::{self, Object, Shape, VTNIndex};
-use whc::{FrontendEvent, GameButton};
-use client_state::ClientState;
+use whc::{FrontendEvent, GameButton, ClientState};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -171,7 +170,7 @@ impl Frontend {
 }
 
 fn create_view_matrix(state: &ClientState) -> Matrix4<f32> {
-    let translation = Matrix4::from_translation(state.player.position);
-    let rotation = Matrix4::from(state.player.rotation);
+    let translation = Matrix4::from_translation(state.world().player.position);
+    let rotation = Matrix4::from(state.world().player.rotation);
     (translation * rotation).invert().unwrap()
 }
