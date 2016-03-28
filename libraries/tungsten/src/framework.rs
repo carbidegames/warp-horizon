@@ -29,11 +29,16 @@ impl<M: 'static, F: Frontend<M>> Framework<M, F> {
             // Make the frontend raise any needed frontend events
             self.frontend.process_events(&mut self.dispatcher, &mut self.model);
 
-            // Update the game
+            // Update the game TODO: Run this at a predictable interval
             self.dispatcher.dispatch(&mut self.model, UpdateEvent { delta: 0.16 });
 
-            // Render the game
+            // Render the game TODO: Only do this if the world updated
             self.frontend.render(&self.model);
+
+            // Sleep a bit
+            // TODO: Only sleep if the world didn't update
+            // TODO: Only sleep a small amount and measure the time 
+            ::std::thread::sleep(::std::time::Duration::from_millis(16));
         }
     }
 }

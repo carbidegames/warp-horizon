@@ -62,6 +62,12 @@ impl<M: 'static> EventDispatcher<M> {
             handler.attempt_dispatch(model, &dyn_event);
         }
     }
+
+    pub fn dispatch_dynamic(&mut self, model: &mut M, event: Box<Dynamic>) {
+        for handler in &mut self.handlers {
+            handler.attempt_dispatch(model, &event);
+        }
+    }
 }
 
 #[cfg(test)]

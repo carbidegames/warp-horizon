@@ -1,10 +1,8 @@
-extern crate glium;
 extern crate tungsten;
 extern crate tungsten_glium2d;
 
-use glium::Frame;
 use tungsten::{Framework, EventDispatcher, UpdateEvent};
-use tungsten_glium2d::{GliumFrontend, CloseRequestEvent};
+use tungsten_glium2d::{Frontend2D, CloseRequestEvent, RenderBatch};
 
 struct GameModel {
     should_close: bool,
@@ -22,18 +20,26 @@ impl GameModel {
     fn update(&mut self, delta: f32) {
         self.bird_height -= 1.0 * delta;
     }
+
+    fn request_close(&mut self) {
+        self.should_close = true;
+    }
+
+    fn keep_running(&self) -> bool {
+        !self.should_close
+    }
 }
 
 fn close_request_handler(model: &mut GameModel, _event: &CloseRequestEvent) {
-    model.should_close = true;
+    model.request_close();
 }
 
 fn bird_update_handler(model: &mut GameModel, event: &UpdateEvent) {
     model.update(event.delta);
 }
 
-fn bird_view(model: &GameModel, _frame: &mut Frame) {
-    println!("{}", model.bird_height);
+fn bird_view(model: &GameModel, render: &mut RenderBatch) {
+    render.rectangle([0.0, model.bird_height], [64.0, 64.0]);
 }
 
 fn main() {
@@ -43,9 +49,9 @@ fn main() {
     event_dispatcher.add_handler(close_request_handler);
     event_dispatcher.add_handler(bird_update_handler);
 
-    let mut frontend = GliumFrontend::new();
+    let mut frontend = Frontend2D::new();
     frontend.add_view(bird_view);
 
     let framework = Framework::new(model, frontend, event_dispatcher);
-    framework.run(|model| !model.should_close);
+    framework.run(|model| model.keep_running());
 }
