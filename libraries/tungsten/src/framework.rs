@@ -37,7 +37,7 @@ impl<M: 'static, F: Frontend<M>> Framework<M, F> {
 
             // Sleep a bit
             // TODO: Only sleep if the world didn't update
-            // TODO: Only sleep a small amount and measure the time 
+            // TODO: Only sleep a small amount and measure the time
             ::std::thread::sleep(::std::time::Duration::from_millis(16));
         }
     }

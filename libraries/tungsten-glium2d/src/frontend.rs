@@ -3,8 +3,14 @@ use std::sync::mpsc::{self, Sender, Receiver};
 use glium::glutin::Event;
 use tungsten::{Frontend, EventDispatcher};
 use runtime::FrontendRuntime;
+use {Key, KeyState};
 
 pub struct CloseRequestEvent;
+
+pub struct KeyboardInputEvent {
+    pub key: Key,
+    pub state: KeyState,
+}
 
 pub trait View2D<M> {
     fn render(&mut self, model: &M, batch: &mut RenderBatch);
@@ -58,6 +64,11 @@ impl<M: 'static> Frontend<M> for Frontend2D<M> {
             if let Ok(event) = self.event_recv.try_recv() {
                 match event {
                     Event::Closed => dispatcher.dispatch(model, CloseRequestEvent),
+                    Event::KeyboardInput(state, _, virtual_key) =>
+                        dispatcher.dispatch(model, KeyboardInputEvent {
+                            key: virtual_key.unwrap(),
+                            state: state
+                        }),
                     _ => ()
                 }
             } else {

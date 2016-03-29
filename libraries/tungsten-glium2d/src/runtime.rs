@@ -53,29 +53,9 @@ impl FrontendRuntime {
             .with_title("Tungsten".into())
             .build_glium().unwrap();
 
-        let vertex_shader_src = r#"
-            #version 140
-
-            uniform mat3 m_matrix;
-
-            in vec2 i_position;
-
-            void main() {
-                gl_Position = vec4(m_matrix * vec3(i_position, 1.0), 1.0);
-            }
-        "#;
-        let fragment_shader_src = r#"
-            #version 140
-
-            out vec4 o_color;
-
-            void main() {
-                o_color = vec4(1.0, 0.0, 0.0, 1.0);
-            }
-        "#;
         let program = Program::from_source(
             &display,
-            vertex_shader_src, fragment_shader_src,
+            include_str!("shader.vert.glsl"), include_str!("shader.frag.glsl"),
             None
         ).unwrap();
 
@@ -83,6 +63,7 @@ impl FrontendRuntime {
             event_send: event_send,
             batch_recv: batch_recv,
             batch_return_send: batch_return_send,
+
             display: display,
             program: program,
         }
@@ -102,13 +83,13 @@ impl FrontendRuntime {
             if let Ok(batch) = self.batch_recv.try_recv() {
                 // Start a new frame
                 let mut frame = self.display.draw();
-                frame.clear_color(0.0, 1.0, 0.0, 1.0);
+                frame.clear_color(0.0, 0.0, 0.0, 1.0);
 
                 // Create the uniforms for the camera
                 let matrix: [[f32; 3]; 3] = [
                     [2.0/1280.0, 0.0, 0.0],
                     [0.0, 2.0/720.0, 0.0],
-                    [0.0, 0.0, 0.1]
+                    [0.0, 0.0, 1.0]
                 ];
                 let uniforms = uniform! {
                     m_matrix: matrix
