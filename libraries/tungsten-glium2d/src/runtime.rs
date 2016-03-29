@@ -1,19 +1,19 @@
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{Arc, Barrier};
 use std::thread::{self, JoinHandle};
+//use cgmath::Matrix3;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::{Event, WindowBuilder};
 use glium::index::{NoIndices, PrimitiveType};
-use glium::uniforms::EmptyUniforms;
 use glium::{DisplayBuild, Surface, VertexBuffer, Program};
 use RenderBatch;
 
 #[derive(Copy, Clone)]
 struct Vertex {
-    position: [f32; 2],
+    i_position: [f32; 2],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, i_position);
 
 pub struct FrontendRuntime {
     event_send: Sender<Event>,
@@ -50,24 +50,27 @@ impl FrontendRuntime {
     ) -> Self {
         let display = WindowBuilder::new()
             .with_dimensions(1280, 720)
+            .with_title("Tungsten".into())
             .build_glium().unwrap();
 
         let vertex_shader_src = r#"
             #version 140
 
-            in vec2 position;
+            uniform mat3 m_matrix;
+
+            in vec2 i_position;
 
             void main() {
-                gl_Position = vec4(position, 0.0, 1.0);
+                gl_Position = vec4(m_matrix * vec3(i_position, 1.0), 1.0);
             }
         "#;
         let fragment_shader_src = r#"
             #version 140
 
-            out vec4 color;
+            out vec4 o_color;
 
             void main() {
-                color = vec4(1.0, 0.0, 0.0, 1.0);
+                o_color = vec4(1.0, 0.0, 0.0, 1.0);
             }
         "#;
         let program = Program::from_source(
@@ -101,21 +104,37 @@ impl FrontendRuntime {
                 let mut frame = self.display.draw();
                 frame.clear_color(0.0, 1.0, 0.0, 1.0);
 
+                // Create the uniforms for the camera
+                let matrix: [[f32; 3]; 3] = [
+                    [2.0/1280.0, 0.0, 0.0],
+                    [0.0, 2.0/720.0, 0.0],
+                    [0.0, 0.0, 0.1]
+                ];
+                let uniforms = uniform! {
+                    m_matrix: matrix
+                };
+
                 // Process the batch
-                // TODO: persistent memory mapped buffer
+                // TODO: Use a persistent memory mapped buffer
                 let mut vertices = Vec::new();
                 for rect in batch.rectangles() {
                     let pos = &rect.position;
-                    vertices.push(Vertex { position: [pos[0] - 0.5, pos[1] - 0.5] });
-                    vertices.push(Vertex { position: [pos[0] + 0.5, pos[1] - 0.5] });
-                    vertices.push(Vertex { position: [pos[0] + 0.0, pos[1] + 0.5] });
-                    println!("{}", pos[1]);
+                    let size = &rect.size;
+                    let size = [size[0] * 0.5, size[1] * 0.5];
+
+                    vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] - size[1]] });
+                    vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] - size[1]] });
+                    vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] + size[1]] });
+
+                    vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] - size[1]] });
+                    vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] + size[1]] });
+                    vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] + size[1]] });
                 }
                 let vertex_buffer = VertexBuffer::new(&self.display, &vertices).unwrap();
                 let indices = NoIndices(PrimitiveType::TrianglesList);
                 frame.draw(
                     &vertex_buffer, &indices, &self.program,
-                    &EmptyUniforms, &Default::default()
+                    &uniforms, &Default::default()
                 ).unwrap();
 
                 // Return the batch and finish the frame

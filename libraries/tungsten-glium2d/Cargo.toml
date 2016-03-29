@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-dynamic = "0.2.1"
+cgmath = "0.7.0"
 glium = "0.13.5"
 
 [dependencies.tungsten]

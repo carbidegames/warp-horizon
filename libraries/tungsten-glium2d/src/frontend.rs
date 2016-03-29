@@ -18,7 +18,7 @@ impl<M, F: Fn(&M, &mut RenderBatch)> View2D<M> for F {
 
 pub struct Frontend2D<M> {
     views: Vec<Box<View2D<M>>>,
-    _runtime_handle: JoinHandle<()>,
+    _runtime_handle: JoinHandle<()>, // TODO: make sure the thread is told to gracefully stop
     event_recv: Receiver<Event>,
     batch_send: Sender<RenderBatch>,
     batch_return_recv: Receiver<RenderBatch>,

@@ -1,4 +1,4 @@
-extern crate dynamic;
+extern crate cgmath;
 #[macro_use] extern crate glium;
 extern crate tungsten;
 
