@@ -22,6 +22,12 @@ impl GameModel {
     fn update(&mut self, delta: f32) {
         self.bird_velocity -= 3.0 * delta;
         self.bird_height += self.bird_velocity;
+
+        // If the bird falls below this, the game is lost
+        if self.bird_height < -300.0 {
+            self.bird_height = 64.0;
+            self.bird_velocity = 0.0;
+        }
     }
 
     fn on_up_pressed(&mut self) {
