@@ -13,21 +13,21 @@ pub struct KeyboardInputEvent {
 }
 
 pub trait View2D<M> {
-    fn render(&mut self, model: &M, batch: &mut RenderBatch);
+    fn render(&mut self, model: &M, batch: &mut FrameRenderInfo);
 }
 
-impl<M, F: Fn(&M, &mut RenderBatch)> View2D<M> for F {
-    fn render(&mut self, model: &M, batch: &mut RenderBatch) {
+impl<M, F: Fn(&M, &mut FrameRenderInfo)> View2D<M> for F {
+    fn render(&mut self, model: &M, batch: &mut FrameRenderInfo) {
         self(model, batch);
     }
 }
 
 pub struct Frontend2D<M> {
-    views: Vec<Box<View2D<M>>>,
+    view: Option<Box<View2D<M>>>,
     _runtime_handle: JoinHandle<()>, // TODO: make sure the thread is told to gracefully stop
     event_recv: Receiver<Event>,
-    batch_send: Sender<RenderBatch>,
-    batch_return_recv: Receiver<RenderBatch>,
+    batch_send: Sender<FrameRenderInfo>,
+    batch_return_recv: Receiver<FrameRenderInfo>,
 }
 
 impl<M> Frontend2D<M> {
@@ -38,13 +38,13 @@ impl<M> Frontend2D<M> {
         let (batch_return_send, batch_return_recv) = mpsc::channel();
 
         // Stick a single batch into the send-return loop to start out with
-        batch_return_send.send(RenderBatch::new()).unwrap();
+        batch_return_send.send(FrameRenderInfo::new()).unwrap();
 
         // Start up the runtime
         let handle = FrontendRuntime::start(event_send, batch_recv, batch_return_send);
 
         Frontend2D {
-            views: Vec::new(),
+            view: None,
             _runtime_handle: handle,
             event_recv: event_recv,
             batch_send: batch_send,
@@ -52,8 +52,8 @@ impl<M> Frontend2D<M> {
         }
     }
 
-    pub fn add_view<V: View2D<M> + 'static>(&mut self, view: V) {
-        self.views.push(Box::new(view));
+    pub fn set_view<V: View2D<M> + 'static>(&mut self, view: V) {
+        self.view = Some(Box::new(view));
     }
 }
 
@@ -79,9 +79,9 @@ impl<M: 'static> Frontend<M> for Frontend2D<M> {
 
     fn render(&mut self, model: &M) {
         // Check if we receiver a batch back from the runtime
-        let mut batch = {
-            if let Ok(batch) = self.batch_return_recv.try_recv() {
-                batch
+        let mut frame = {
+            if let Ok(frame) = self.batch_return_recv.try_recv() {
+                frame
             } else {
                 // We didn't, don't render
                 return;
@@ -89,15 +89,13 @@ impl<M: 'static> Frontend<M> for Frontend2D<M> {
         };
 
         // Clear the batch before we continue to use it
-        batch.clear();
+        frame.clear();
 
         // Build up a render batch
-        for view in &mut self.views {
-            view.render(model, &mut batch);
-        }
+        self.view.as_mut().unwrap().render(model, &mut frame);
 
         // Send the batch to be rendered
-        self.batch_send.send(batch).unwrap();
+        self.batch_send.send(frame).unwrap();
     }
 }
 
@@ -106,26 +104,102 @@ pub struct Rectangle {
     pub size: [f32; 2],
 }
 
-pub struct RenderBatch {
-    rectangles: Vec<Rectangle>,
+pub enum LayerInfo {
+    Camera(GameCameraInfo),
+    Batch(RenderBatchInfo),
 }
 
-impl RenderBatch {
-    fn new() -> Self {
-        RenderBatch {
-            rectangles: Vec::new()
-        }
-    }
+pub trait RenderTarget {
+    fn game_camera(&mut self, position: [f32; 2]) -> &mut GameCameraInfo;
+    fn batch(&mut self) -> &mut RenderBatchInfo;
+    fn layers(&self) -> &Vec<LayerInfo>;
+}
 
-    fn clear(&mut self) {
-        self.rectangles.clear();
-    }
+pub struct RenderBatchInfo {
+    rectangles: Vec<Rectangle>
+}
 
-    pub fn rectangle(&mut self, position: [f32; 2], size: [f32; 2]) {
-        self.rectangles.push(Rectangle { position: position, size: size });
+impl RenderBatchInfo {
+    pub fn rectangle(&mut self, rect: Rectangle) {
+        self.rectangles.push(rect);
     }
 
     pub fn rectangles(&self) -> &Vec<Rectangle> {
         &self.rectangles
+    }
+}
+
+pub struct GameCameraInfo {
+    position: [f32; 2],
+    layers: Vec<LayerInfo>,
+}
+
+impl GameCameraInfo {
+    pub fn position(&self) -> [f32; 2] {
+        self.position
+    }
+}
+
+impl RenderTarget for GameCameraInfo {
+    fn game_camera(&mut self, _position: [f32; 2]) -> &mut GameCameraInfo {
+        unimplemented!();
+    }
+
+    fn batch(&mut self) -> &mut RenderBatchInfo {
+        let batch = RenderBatchInfo {
+            rectangles: Vec::new()
+        };
+        self.layers.push(LayerInfo::Batch(batch));
+
+        let last = self.layers.iter_mut().last().unwrap();
+        if let &mut LayerInfo::Batch(ref mut batch) = last {
+            return batch;
+        }
+        unreachable!();
+    }
+
+    fn layers(&self) -> &Vec<LayerInfo> {
+        &self.layers
+    }
+}
+
+pub struct FrameRenderInfo {
+    layers: Vec<LayerInfo>,
+}
+
+impl FrameRenderInfo {
+    fn new() -> Self {
+        FrameRenderInfo {
+            layers: Vec::new(),
+        }
+    }
+
+    fn clear(&mut self) {
+        self.layers.clear();
+    }
+}
+
+impl RenderTarget for FrameRenderInfo {
+    fn game_camera(&mut self, position: [f32; 2]) -> &mut GameCameraInfo {
+        let cam = GameCameraInfo {
+            position: position,
+            layers: Vec::new(),
+        };
+
+        self.layers.push(LayerInfo::Camera(cam));
+
+        let last = self.layers.iter_mut().last().unwrap();
+        if let &mut LayerInfo::Camera(ref mut cam) = last {
+            return cam;
+        }
+        unreachable!();
+    }
+
+    fn batch(&mut self) -> &mut RenderBatchInfo {
+        unimplemented!();
+    }
+
+    fn layers(&self) -> &Vec<LayerInfo> {
+        &self.layers
     }
 }
