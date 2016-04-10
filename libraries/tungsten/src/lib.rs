@@ -1,4 +1,5 @@
 extern crate dynamic;
+extern crate time;
 
 mod event_dispatcher;
 mod framework;

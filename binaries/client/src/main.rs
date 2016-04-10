@@ -30,13 +30,13 @@ impl GameModel {
 
     fn update(&mut self, delta: f32) {
         // Advance the game state
-        self.camera_distance += 8.0 * delta;
+        self.camera_distance += 32.0 * 6.0 * delta;
 
         // Different paths for the state of the bird
         match self.bird_state {
             BirdState::Alive => {
                 // Make the bird fall
-                self.bird_velocity -= 14.0 * delta;
+                self.bird_velocity -= 32.0 * 16.0 * delta;
                 self.bird_height += self.bird_velocity * delta;
 
                 // If the bird falls below this, it's dead now, you killed it, you monster
@@ -51,7 +51,7 @@ impl GameModel {
     }
 
     fn launch_bird(&mut self) {
-        self.bird_velocity = 64.0;
+        self.bird_velocity = 32.0 * 12.0;
     }
 
     fn reset_game(&mut self) {
@@ -83,6 +83,7 @@ fn keyboard_handler(model: &mut GameModel, event: &KeyboardInputEvent) {
         match event.key {
             Key::W => model.launch_bird(),
             Key::R => model.reset_game(),
+            Key::Escape => model.close(),
             _ => ()
         }
     }

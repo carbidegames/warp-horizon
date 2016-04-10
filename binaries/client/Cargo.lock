@@ -403,6 +403,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "time"
+version = "0.1.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "traitobject"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -412,6 +422,7 @@ name = "tungsten"
 version = "0.1.0"
 dependencies = [
  "dynamic 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
