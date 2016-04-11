@@ -13,47 +13,68 @@ pub struct KeyboardInputEvent {
 }
 
 pub trait View2D<M> {
-    fn render(&mut self, model: &M, batch: &mut FrameRenderInfo);
+    fn render(&mut self, model: &M, info: &mut FrameRenderInfo);
 }
 
 impl<M, F: Fn(&M, &mut FrameRenderInfo)> View2D<M> for F {
-    fn render(&mut self, model: &M, batch: &mut FrameRenderInfo) {
-        self(model, batch);
+    fn render(&mut self, model: &M, info: &mut FrameRenderInfo) {
+        self(model, info);
     }
+}
+
+pub enum FrontendCommand {
+    Frame(FrameRenderInfo),
+    LoadTexture(TextureId, String),
 }
 
 pub struct Frontend2D<M> {
     view: Option<Box<View2D<M>>>,
     _runtime_handle: JoinHandle<()>, // TODO: make sure the thread is told to gracefully stop
+
     event_recv: Receiver<Event>,
-    batch_send: Sender<FrameRenderInfo>,
+    command_send: Sender<FrontendCommand>,
     batch_return_recv: Receiver<FrameRenderInfo>,
+
+    texture_id_counter: u32,
 }
 
 impl<M> Frontend2D<M> {
     pub fn new() -> Self {
         // Set up all the channels
         let (event_send, event_recv) = mpsc::channel();
-        let (batch_send, batch_recv) = mpsc::channel();
+        let (command_send, command_recv) = mpsc::channel();
         let (batch_return_send, batch_return_recv) = mpsc::channel();
 
         // Stick a single batch into the send-return loop to start out with
         batch_return_send.send(FrameRenderInfo::new()).unwrap();
 
         // Start up the runtime
-        let handle = FrontendRuntime::start(event_send, batch_recv, batch_return_send);
+        let handle = FrontendRuntime::start(event_send, command_recv, batch_return_send);
 
         Frontend2D {
             view: None,
             _runtime_handle: handle,
+
             event_recv: event_recv,
-            batch_send: batch_send,
+            command_send: command_send,
             batch_return_recv: batch_return_recv,
+
+            texture_id_counter: 0,
         }
     }
 
     pub fn set_view<V: View2D<M> + 'static>(&mut self, view: V) {
         self.view = Some(Box::new(view));
+    }
+
+    pub fn load_texture(&mut self, path: &str) -> TextureId {
+        let id = TextureId::from_raw(self.texture_id_counter);
+        self.texture_id_counter += 1;
+
+        let command = FrontendCommand::LoadTexture(id, path.into());
+        self.command_send.send(command).unwrap();
+
+        id
     }
 }
 
@@ -95,13 +116,31 @@ impl<M: 'static> Frontend<M> for Frontend2D<M> {
         self.view.as_mut().unwrap().render(model, &mut frame);
 
         // Send the batch to be rendered
-        self.batch_send.send(frame).unwrap();
+        self.command_send.send(FrontendCommand::Frame(frame)).unwrap();
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct TextureId {
+    id: u32
+}
+
+impl TextureId {
+    fn from_raw(id: u32) -> Self {
+        TextureId {
+            id: id
+        }
+    }
+
+    pub fn raw(&self) -> u32 {
+        self.id
     }
 }
 
 pub struct Rectangle {
     pub position: [f32; 2],
     pub size: [f32; 2],
+    pub texture: TextureId,
 }
 
 pub enum LayerInfo {

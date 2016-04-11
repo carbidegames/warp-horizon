@@ -1,40 +1,53 @@
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{Arc, Barrier};
 use std::thread::{self, JoinHandle};
+use std::fs::File;
 use cgmath::Matrix3;
 use glium::backend::glutin_backend::GlutinFacade;
+use glium::draw_parameters::DrawParameters;
 use glium::glutin::{Event, WindowBuilder};
 use glium::index::{NoIndices, PrimitiveType};
-use glium::{Frame, DisplayBuild, Surface, VertexBuffer, Program};
+use glium::texture::RawImage2d;
+use glium::texture::srgb_texture2d_array::SrgbTexture2dArray;
+use glium::uniforms::MagnifySamplerFilter;
+use glium::{Frame, DisplayBuild, Surface, VertexBuffer, Program, Blend};
+use image;
+use image::RgbaImage;
 use {FrameRenderInfo, RenderBatchInfo, GameCameraInfo, RenderTarget, LayerInfo};
+use frontend::{FrontendCommand};
 
 #[derive(Copy, Clone)]
 struct Vertex {
     i_position: [f32; 2],
+    i_tex: [f32; 2],
+    i_texid: f32,
 }
 
-implement_vertex!(Vertex, i_position);
+implement_vertex!(Vertex, i_position, i_tex, i_texid);
 
 pub struct FrontendRuntime {
     event_send: Sender<Event>,
-    batch_recv: Receiver<FrameRenderInfo>,
+    command_recv: Receiver<FrontendCommand>,
     batch_return_send: Sender<FrameRenderInfo>,
 
     display: GlutinFacade,
     program: Program,
+
+    images: Vec<RgbaImage>,
+    texture_array: Option<SrgbTexture2dArray>,
 }
 
 impl FrontendRuntime {
     pub fn start(
         event_send: Sender<Event>,
-        batch_recv: Receiver<FrameRenderInfo>, batch_return_send: Sender<FrameRenderInfo>
+        command_recv: Receiver<FrontendCommand>, batch_return_send: Sender<FrameRenderInfo>
     ) -> JoinHandle<()> {
         let init_barrier = Arc::new(Barrier::new(2));
         let barrier_clone = init_barrier.clone();
 
         // Actually start the runtime thread
         let handle = thread::spawn(move || {
-            let runtime = FrontendRuntime::new(event_send, batch_recv, batch_return_send);
+            let runtime = FrontendRuntime::new(event_send, command_recv, batch_return_send);
             runtime.run(barrier_clone);
         });
 
@@ -46,7 +59,7 @@ impl FrontendRuntime {
 
     fn new(
         event_send: Sender<Event>,
-        batch_recv: Receiver<FrameRenderInfo>, batch_return_send: Sender<FrameRenderInfo>
+        command_recv: Receiver<FrontendCommand>, batch_return_send: Sender<FrameRenderInfo>
     ) -> Self {
         let display = WindowBuilder::new()
             .with_dimensions(1280, 720)
@@ -61,15 +74,18 @@ impl FrontendRuntime {
 
         FrontendRuntime {
             event_send: event_send,
-            batch_recv: batch_recv,
+            command_recv: command_recv,
             batch_return_send: batch_return_send,
 
             display: display,
             program: program,
+
+            images: Vec::new(),
+            texture_array: None,
         }
     }
 
-    fn run(self, init_barrier: Arc<Barrier>) {
+    fn run(mut self, init_barrier: Arc<Barrier>) {
         init_barrier.wait();
 
         // Actually run the frontend loop
@@ -80,13 +96,32 @@ impl FrontendRuntime {
             }
 
             // Check for frames to render
-            if let Ok(frame) = self.batch_recv.try_recv() {
-                // Render the frame
-                let glium_frame = self.render_frame(&frame);
+            // TODO: Loop over all queued commands
+            if let Ok(command) = self.command_recv.try_recv() {
+                match command {
+                    FrontendCommand::Frame(frame) => {
+                        // Render the frame
+                        let glium_frame = self.render_frame(&frame);
 
-                // Return the batch and finish the frame (flipping the buffers)
-                self.batch_return_send.send(frame).unwrap();
-                glium_frame.finish().unwrap();
+                        // Return the batch and finish the frame (flipping the buffers)
+                        self.batch_return_send.send(frame).unwrap();
+                        glium_frame.finish().unwrap();
+                    },
+                    FrontendCommand::LoadTexture(id, path) => {
+                        // Just verify the id is going to be right
+                        assert!(self.images.len() as u32 == id.raw());
+
+                        // Actually load and add the texture
+                        let image_file = image::load(
+                            File::open(path).unwrap(), image::PNG
+                        ).unwrap().to_rgba();
+                        self.images.push(image_file);
+
+                        // Invalidate the texture array because of the new texture
+                        //TODO: Allow texture unloading and re-use reclaimed space
+                        self.texture_array = None;
+                    }
+                }
             }
 
             // Sleep a bit TODO: Only sleep if nothing was processed
@@ -94,10 +129,25 @@ impl FrontendRuntime {
         }
     }
 
-    fn render_frame(&self, info: &FrameRenderInfo) -> Frame {
+    fn render_frame(&mut self, info: &FrameRenderInfo) -> Frame {
+        // Create the texture array if needed
+        if self.texture_array.is_none() {
+            let mut images = Vec::new();
+
+            for image_data in &self.images {
+                let image_dimensions = image_data.dimensions();
+                let image = RawImage2d::from_raw_rgba_reversed(
+                    image_data.clone().into_raw(), image_dimensions
+                );
+                images.push(image);
+            }
+
+            self.texture_array = Some(SrgbTexture2dArray::new(&self.display, images).unwrap());
+        }
+
         // Start a new frame
         let mut frame = self.display.draw();
-        frame.clear_color(0.0, 0.0, 0.0, 1.0);
+        frame.clear_color(0.05, 0.05, 0.05, 1.0);
 
         // Go over all the cameras
         // TODO: Support nested cameras
@@ -112,7 +162,7 @@ impl FrontendRuntime {
         frame
     }
 
-    fn render_camera(&self, frame: &mut Frame, camera: &GameCameraInfo) {
+    fn render_camera(&mut self, frame: &mut Frame, camera: &GameCameraInfo) {
         // Go over all the batches
         // TODO: Support nested cameras
         for layer in camera.layers() {
@@ -124,7 +174,10 @@ impl FrontendRuntime {
         }
     }
 
-    fn render_batch(&self, frame: &mut Frame, camera: &GameCameraInfo, batch: &RenderBatchInfo) {
+    fn render_batch(&mut self, frame: &mut Frame, camera: &GameCameraInfo, batch: &RenderBatchInfo) {
+        // Get the texture array
+        let texture_array = self.texture_array.as_ref().unwrap();
+
         // Create the uniforms for the camera
         // TODO: Share between batches
         let proj_matrix: Matrix3<f32> = [
@@ -142,7 +195,8 @@ impl FrontendRuntime {
 
         let matrix_raw: [[f32; 3]; 3] = (proj_matrix * view_matrix).into();
         let uniforms = uniform! {
-            m_matrix: matrix_raw
+            m_matrix: matrix_raw,
+            m_textures: texture_array.sampled().magnify_filter(MagnifySamplerFilter::Linear),
         };
 
         // TODO: Use a persistent memory mapped buffer
@@ -151,20 +205,47 @@ impl FrontendRuntime {
             let pos = &rect.position;
             let size = &rect.size;
             let size = [size[0] * 0.5, size[1] * 0.5];
+            let rawid = rect.texture.raw() as f32;
 
-            vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] - size[1]] });
-            vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] - size[1]] });
-            vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] + size[1]] });
+            vertices.push(Vertex {
+                i_position: [pos[0] - size[0], pos[1] - size[1]],
+                i_tex: [0.0, 0.0], i_texid: rawid
+            });
+            vertices.push(Vertex {
+                i_position: [pos[0] + size[0], pos[1] - size[1]],
+                i_tex: [1.0, 0.0], i_texid: rawid
+            });
+            vertices.push(Vertex {
+                i_position: [pos[0] + size[0], pos[1] + size[1]],
+                i_tex: [1.0, 1.0], i_texid: rawid
+            });
 
-            vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] - size[1]] });
-            vertices.push(Vertex { i_position: [pos[0] + size[0], pos[1] + size[1]] });
-            vertices.push(Vertex { i_position: [pos[0] - size[0], pos[1] + size[1]] });
+            vertices.push(Vertex {
+                i_position: [pos[0] - size[0], pos[1] - size[1]],
+                i_tex: [0.0, 0.0], i_texid: rawid
+            });
+            vertices.push(Vertex {
+                i_position: [pos[0] + size[0], pos[1] + size[1]],
+                i_tex: [1.0, 1.0], i_texid: rawid
+            });
+            vertices.push(Vertex {
+                i_position: [pos[0] - size[0], pos[1] + size[1]],
+                i_tex: [0.0, 1.0], i_texid: rawid
+            });
         }
         let vertex_buffer = VertexBuffer::new(&self.display, &vertices).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
+
+        // Set up the draw parameters
+        let params = DrawParameters {
+            blend: Blend::alpha_blending(),
+            .. Default::default()
+        };
+
+        // Actually do the draw call
         frame.draw(
             &vertex_buffer, &indices, &self.program,
-            &uniforms, &Default::default()
+            &uniforms, &params
         ).unwrap();
     }
 }

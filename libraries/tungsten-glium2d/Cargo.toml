@@ -6,6 +6,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.7.0"
 glium = "0.13.5"
+image = "0.8.0"
 
 [dependencies.tungsten]
 path = "../../libraries/tungsten"

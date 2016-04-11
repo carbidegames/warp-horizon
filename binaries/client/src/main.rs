@@ -2,7 +2,7 @@ extern crate tungsten;
 extern crate tungsten_glium2d;
 
 use tungsten::{Framework, EventDispatcher, UpdateEvent};
-use tungsten_glium2d::{Frontend2D, CloseRequestEvent, FrameRenderInfo, KeyboardInputEvent, Key, KeyState, RenderTarget, Rectangle};
+use tungsten_glium2d::{Frontend2D, CloseRequestEvent, FrameRenderInfo, KeyboardInputEvent, Key, KeyState, RenderTarget, Rectangle, View2D, TextureId};
 
 enum BirdState {
     Alive,
@@ -36,7 +36,7 @@ impl GameModel {
         match self.bird_state {
             BirdState::Alive => {
                 // Make the bird fall
-                self.bird_velocity -= 32.0 * 16.0 * delta;
+                self.bird_velocity -= 32.0 * 24.0 * delta;
                 self.bird_height += self.bird_velocity * delta;
 
                 // If the bird falls below this, it's dead now, you killed it, you monster
@@ -51,7 +51,7 @@ impl GameModel {
     }
 
     fn launch_bird(&mut self) {
-        self.bird_velocity = 32.0 * 12.0;
+        self.bird_velocity = 32.0 * 18.0;
     }
 
     fn reset_game(&mut self) {
@@ -89,46 +89,69 @@ fn keyboard_handler(model: &mut GameModel, event: &KeyboardInputEvent) {
     }
 }
 
-fn view(model: &GameModel, info: &mut FrameRenderInfo) {
-    render_world(model, info);
-    render_ui(model, info);
+struct View {
+    bird: TextureId,
+    ground: TextureId,
 }
 
-fn render_world(model: &GameModel, info: &mut FrameRenderInfo) {
-    let camera = info.game_camera([model.camera_distance, 0.0]);
-    let batch = camera.batch();
+impl View {
+    fn new(frontend: &mut Frontend2D<GameModel>) -> Self {
+        // Load in textures
+        let bird = frontend.load_texture("./assets/bird.png");
+        let ground = frontend.load_texture("./assets/grass.png");
 
-    // Draw the terrain
-    for i in 0..20 {
+        View {
+            bird: bird,
+            ground: ground,
+        }
+    }
+
+    fn render_world(&self, model: &GameModel, info: &mut FrameRenderInfo) {
+        let camera = info.game_camera([model.camera_distance, 0.0]);
+        let batch = camera.batch();
+
+        // Draw the terrain
+        for i in -10..100 {
+            let rect = Rectangle {
+                position: [i as f32 * 64.0, -720.0/2.0],
+                size: [64.0, 64.0],
+                texture: self.ground,
+            };
+            batch.rectangle(rect);
+        }
+
+        // Draw the bird
+        let dist = if let BirdState::Dead(dist) = model.bird_state {
+            dist
+        } else {
+            model.camera_distance
+        };
         let rect = Rectangle {
-            position: [i as f32 * 256.0, -720.0/2.0],
+            position: [dist, model.bird_height],
             size: [64.0, 64.0],
+            texture: self.bird,
         };
         batch.rectangle(rect);
     }
 
-    // Draw the bird
-    let dist = if let BirdState::Dead(dist) = model.bird_state {
-        dist
-    } else {
-        model.camera_distance
-    };
-    let rect = Rectangle {
-        position: [dist, model.bird_height],
-        size: [64.0, 64.0],
-    };
-    batch.rectangle(rect);
+    fn render_ui(&self, _model: &GameModel, info: &mut FrameRenderInfo) {
+        let camera = info.game_camera([0.0, 0.0]); // TODO: .ui_camera() helper
+        let batch = camera.batch();
+        //let top_left = camera.align_top_left(batch);
+        let rect = Rectangle {
+            position: [-1280.0/2.0, 720.0/2.0],
+            size: [64.0, 64.0],
+            texture: self.bird,
+        };
+        batch.rectangle(rect);
+    }
 }
 
-fn render_ui(_model: &GameModel, info: &mut FrameRenderInfo) {
-    let camera = info.game_camera([0.0, 0.0]); // TODO: .ui_camera() helper
-    let batch = camera.batch();
-    //let top_left = camera.align_top_left(batch);
-    let rect = Rectangle {
-        position: [-1280.0/2.0, 720.0/2.0],
-        size: [64.0, 64.0],
-    };
-    batch.rectangle(rect);
+impl View2D<GameModel> for View {
+    fn render(&mut self, model: &GameModel, info: &mut FrameRenderInfo) {
+        self.render_world(model, info);
+        self.render_ui(model, info);
+    }
 }
 
 fn main() {
@@ -140,6 +163,7 @@ fn main() {
     event_dispatcher.add_handler(keyboard_handler);
 
     let mut frontend = Frontend2D::new();
+    let view = View::new(&mut frontend);
     frontend.set_view(view);
 
     let framework = Framework::new(model, frontend, event_dispatcher);
