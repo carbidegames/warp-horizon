@@ -90,42 +90,41 @@ impl FrontendRuntime {
 
         // Actually run the frontend loop
         loop {
-            // Check events
-            for ev in self.display.poll_events() {
-                self.event_send.send(ev).unwrap();
-            }
+            // Get the next queued command
+            let command = self.command_recv.recv().unwrap();
 
-            // Check for frames to render
-            // TODO: Loop over all queued commands
-            if let Ok(command) = self.command_recv.try_recv() {
-                match command {
-                    FrontendCommand::Frame(frame) => {
-                        // Render the frame
-                        let glium_frame = self.render_frame(&frame);
-
-                        // Return the batch and finish the frame (flipping the buffers)
-                        self.batch_return_send.send(frame).unwrap();
-                        glium_frame.finish().unwrap();
-                    },
-                    FrontendCommand::LoadTexture(id, path) => {
-                        // Just verify the id is going to be right
-                        assert!(self.images.len() as u32 == id.raw());
-
-                        // Actually load and add the texture
-                        let image_file = image::load(
-                            File::open(path).unwrap(), image::PNG
-                        ).unwrap().to_rgba();
-                        self.images.push(image_file);
-
-                        // Invalidate the texture array because of the new texture
-                        //TODO: Allow texture unloading and re-use reclaimed space
-                        self.texture_array = None;
+            // Handle the command
+            match command {
+                FrontendCommand::Frame(frame) => {
+                    // Check events for this frame
+                    // We could do this separated from rendering but it's simpler if we just
+                    // block on the recv.
+                    for ev in self.display.poll_events() {
+                        self.event_send.send(ev).unwrap();
                     }
+
+                    // Render the frame
+                    let glium_frame = self.render_frame(&frame);
+
+                    // Return the batch and finish the frame (flipping the buffers)
+                    self.batch_return_send.send(frame).unwrap();
+                    glium_frame.finish().unwrap();
+                },
+                FrontendCommand::LoadTexture(id, path) => {
+                    // Just verify the id is going to be right
+                    assert!(self.images.len() as u32 == id.raw());
+
+                    // Actually load and add the texture
+                    let image_file = image::load(
+                        File::open(path).unwrap(), image::PNG
+                    ).unwrap().to_rgba();
+                    self.images.push(image_file);
+
+                    // Invalidate the texture array because of the new texture
+                    //TODO: Allow texture unloading and re-use reclaimed space
+                    self.texture_array = None;
                 }
             }
-
-            // Sleep a bit TODO: Only sleep if nothing was processed
-            ::std::thread::sleep(::std::time::Duration::from_millis(1));
         }
     }
 

@@ -1,4 +1,4 @@
-use time::PreciseTime;
+use time::{PreciseTime, Duration};
 use EventDispatcher;
 
 pub trait Frontend<M> {
@@ -26,27 +26,31 @@ impl<M: 'static, F: Frontend<M>> Framework<M, F> {
     }
 
     pub fn run<RC: Fn(&M) -> bool>(mut self, run_condition: RC) {
-        let mut delta = 0.05;
+        let mut last_update = PreciseTime::now();
+
+        // Loop as long as the run condition of our model is still true
         while run_condition(&self.model) {
-            // Keep track of the start of the frame
-            let start = PreciseTime::now();
+            // Check time elapsed since the last update tick
+            let now = PreciseTime::now();
+            let elapsed = last_update.to(now);
 
-            // Make the frontend raise any needed frontend events
-            self.frontend.process_events(&mut self.dispatcher, &mut self.model);
+            // If we're over a very small minimum, run the update tick
+            // This is to avoid floating point errors with really small deltas
+            if elapsed > Duration::milliseconds(1) {
+                // Turn the delta into a multiplier and keep track of when this update tick happened
+                let delta = elapsed.num_nanoseconds().unwrap() as f32 / 1_000_000_000.0;
+                assert!(delta > 0.0);
+                last_update = now;
 
-            // Update the game TODO: Run this at a predictable interval
-            self.dispatcher.dispatch(&mut self.model, UpdateEvent { delta: delta });
-
-            // Render the game TODO: Only do this if the world updated
-            self.frontend.render(&self.model);
-
-            // Sleep a bit
-            // TODO: Only sleep if the world didn't update
-            ::std::thread::sleep(::std::time::Duration::from_millis(1));
-
-            // Measure the delta
-            let duration = start.to(PreciseTime::now());
-            delta = duration.num_microseconds().unwrap() as f32 / 1_000_000.0;
+                // Perform the actual update tick
+                self.frontend.process_events(&mut self.dispatcher, &mut self.model);
+                self.dispatcher.dispatch(&mut self.model, UpdateEvent { delta: delta });
+                self.frontend.render(&self.model);
+            } else {
+                // Yield some CPU time
+                // TODO: Yields too much on i7s and is overall unpredictable
+                ::std::thread::sleep(::std::time::Duration::from_millis(1));
+            }
         }
     }
 }
