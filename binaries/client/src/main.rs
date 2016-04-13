@@ -92,6 +92,7 @@ fn keyboard_handler(model: &mut GameModel, event: &KeyboardInputEvent) {
 struct View {
     bird: TextureId,
     ground: TextureId,
+    youdied: TextureId,
 }
 
 impl View {
@@ -99,10 +100,12 @@ impl View {
         // Load in textures
         let bird = frontend.load_texture("./assets/bird.png");
         let ground = frontend.load_texture("./assets/grass.png");
+        let youdied = frontend.load_texture("./assets/youdied.png");
 
         View {
             bird: bird,
             ground: ground,
+            youdied: youdied,
         }
     }
 
@@ -121,10 +124,9 @@ impl View {
         }
 
         // Draw the bird
-        let dist = if let BirdState::Dead(dist) = model.bird_state {
-            dist
-        } else {
-            model.camera_distance
+        let dist = {
+            if let BirdState::Dead(dist) = model.bird_state { dist }
+            else { model.camera_distance }
         };
         let rect = Rectangle {
             position: [dist, model.bird_height],
@@ -134,16 +136,18 @@ impl View {
         batch.rectangle(rect);
     }
 
-    fn render_ui(&self, _model: &GameModel, info: &mut FrameRenderInfo) {
-        let camera = info.game_camera([0.0, 0.0]); // TODO: .ui_camera() helper
+    fn render_ui(&self, model: &GameModel, info: &mut FrameRenderInfo) {
+        let camera = info.game_camera([0.0, 0.0]);
         let batch = camera.batch();
-        //let top_left = camera.align_top_left(batch);
-        let rect = Rectangle {
-            position: [-1280.0/2.0, 720.0/2.0],
-            size: [64.0, 64.0],
-            texture: self.bird,
-        };
-        batch.rectangle(rect);
+
+        if let BirdState::Dead(_) = model.bird_state {
+            let rect = Rectangle {
+                position: [0.0, 0.0],
+                size: [256.0, 256.0],
+                texture: self.youdied,
+            };
+            batch.rectangle(rect);
+        }
     }
 }
 

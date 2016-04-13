@@ -5,8 +5,11 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 cgmath = "0.7.0"
-glium = "0.13.5"
+#glium = "0.13.5" waiting on arrays in uniforms to be supported
 image = "0.8.0"
+
+[dependencies.glium]
+git = "https://github.com/carbidegames/glium.git"
 
 [dependencies.tungsten]
 path = "../../libraries/tungsten"
